@@ -1,0 +1,1713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lancmall 物流品类自查工具 | Logistics Category Checker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0a1628; --pink: #FF6B9D; --yellow: #FFD93D;
+  --gradient: linear-gradient(135deg, #FF6B9D, #FFD93D);
+  --text: #1a1a2e; --text-light: #6b7280; --bg: #f8f9fc;
+  --card: #fff; --border: #e5e7eb;
+  --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #3b82f6;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', 'Noto Sans SC', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+
+/* 顶部导航 */
+.header { background: var(--navy); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid; border-image: var(--gradient) 1; position: sticky; top: 0; z-index: 100; }
+.logo { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.logo-icon { width: 36px; height: 36px; background: var(--gradient); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: var(--navy); font-size: 18px; }
+.logo-text { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header-right { display: flex; gap: 8px; align-items: center; }
+.nav-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.15); }
+.nav-btn:hover { background: rgba(255,255,255,0.15); }
+.nav-btn.active { background: var(--gradient); color: var(--navy); }
+.lang-toggle { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 4px 12px; cursor: pointer; display: flex; gap: 4px; align-items: center; font-size: 13px; }
+.lang-btn { padding: 2px 8px; border-radius: 12px; border: none; background: transparent; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 12px; font-weight: 600; }
+.lang-btn.active { background: var(--gradient); color: var(--navy); }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+
+/* 卡片 */
+.card { background: var(--card); border-radius: 14px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+.card-title { font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.step-number { width: 28px; height: 28px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: var(--navy); }
+
+/* 表单 */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+.form-label .required { color: var(--danger); margin-left: 4px; }
+.form-label .hint { font-size: 12px; color: var(--text-light); font-weight: 400; margin-left: 8px; }
+.form-input, .form-select { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; background: white; transition: all 0.2s; }
+.form-input:focus, .form-select:focus { outline: none; border-color: var(--pink); box-shadow: 0 0 0 3px rgba(255,107,157,0.1); }
+.form-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.form-row .form-group { flex: 1; margin-bottom: 0; }
+
+/* 选项卡片 */
+.options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.options-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.option-card { padding: 12px; border: 1.5px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s; text-align: center; background: white; }
+.option-card:hover { border-color: var(--pink); background: #fff5f7; }
+.option-card.selected { border-color: var(--pink); background: #fff0f5; box-shadow: 0 0 0 2px rgba(255,107,157,0.15); }
+.option-card .icon { font-size: 20px; margin-bottom: 6px; }
+.option-card .title { font-size: 13px; font-weight: 600; color: var(--text); }
+.option-card .desc { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+
+/* 是/否按钮组 */
+.yes-no-group { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; }
+.yes-no-btn { padding: 12px; text-align: center; cursor: pointer; background: white; font-size: 14px; font-weight: 600; color: var(--text); transition: all 0.2s; border: none; }
+.yes-no-btn:first-child { border-right: 1.5px solid var(--border); }
+.yes-no-btn:hover { background: #fff5f7; }
+.yes-no-btn.selected { background: var(--gradient); color: var(--navy); }
+
+/* 按钮 */
+.btn { padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+.btn-primary { background: var(--gradient); color: var(--navy); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(255,107,157,0.3); }
+.btn-outline { background: white; color: var(--navy); border: 1.5px solid var(--navy); }
+.btn-outline:hover { background: var(--navy); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-block { width: 100%; }
+
+/* 提示条 */
+.alert { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+.alert-info { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+.alert-success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+.alert-error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+/* 结果卡片 */
+.result-card { background: linear-gradient(135deg, #fff5f7, #fffbeb); border: 2px solid var(--border); border-radius: 14px; padding: 20px; margin-top: 20px; }
+.result-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 14px; }
+.result-item:last-child { border-bottom: none; }
+.result-item .label { color: var(--text-light); }
+.result-item .value { font-weight: 600; color: var(--text); }
+.result-item .value.highlight { color: var(--pink); font-size: 18px; font-weight: 700; }
+
+/* 徽章 */
+.badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; }
+.badge.normal { background: #d1fae5; color: #065f46; }
+.badge.sensitive { background: #fef3c7; color: #92400e; }
+.badge.banned { background: #fee2e2; color: #991b1b; }
+.badge.unknown { background: #e0e7ff; color: #3730a3; }
+.badge.air { background: #ede9fe; color: #5b21b6; }
+.badge.sea { background: #e0f2fe; color: #075985; }
+
+/* 登录界面 */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0a1628, #1a2744); }
+.login-box { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 48px 40px; width: 100%; max-width: 400px; text-align: center; }
+.login-box h2 { color: white; font-size: 24px; font-weight: 700; margin-bottom: 8px; font-family: 'Playfair Display', serif; }
+.login-box p { color: rgba(255,255,255,0.6); font-size: 14px; margin-bottom: 32px; }
+.login-box input { width: 100%; padding: 14px 18px; font-size: 15px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: white; outline: none; margin-bottom: 16px; }
+.login-box input:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(255,107,157,0.2); }
+.login-box button { width: 100%; padding: 14px; background: var(--gradient); border: none; border-radius: 10px; color: var(--navy); font-size: 15px; font-weight: 700; cursor: pointer; }
+.login-error { color: #ff6b6b; font-size: 13px; margin-top: 12px; min-height: 18px; }
+
+/* 标签页 */
+.tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--card); padding: 6px; border-radius: 12px; border: 1px solid var(--border); overflow-x: auto; }
+.tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-light); transition: all 0.3s; white-space: nowrap; }
+.tab.active { background: var(--gradient); color: var(--navy); }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 统计卡片 */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); text-align: center; }
+.stat-card .stat-value { font-size: 28px; font-weight: 900; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.stat-card .stat-label { font-size: 11px; color: var(--text-light); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* 表格 */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { background: #f8f9fc; padding: 12px; text-align: left; font-weight: 700; color: var(--navy); border-bottom: 2px solid var(--border); white-space: nowrap; }
+td { padding: 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:hover { background: rgba(255,107,157,0.03); }
+
+/* 品类管理 */
+.category-manage { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+.cat-section { background: #fafbfc; border-radius: 12px; padding: 16px; border: 1px solid var(--border); }
+.cat-section h4 { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.cat-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; min-height: 40px; }
+.cat-tag { background: white; border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.cat-tag .remove { cursor: pointer; color: var(--danger); font-weight: 700; }
+.cat-input-row { display: flex; gap: 8px; }
+.cat-input-row input { flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; }
+.cat-input-row button { padding: 6px 12px; background: var(--gradient); border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--navy); }
+
+/* 隐藏 */
+.hidden { display: none !important; }
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .form-row { flex-direction: column; gap: 12px; }
+  .options-grid-3 { grid-template-columns: 1fr; }
+  .header { padding: 10px 16px; }
+  .logo-text { font-size: 16px; }
+  .container { padding: 16px 12px; }
+  .card { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="header">
+  <div class="logo" onclick="showPage('query')">
+    <div class="logo-icon">L</div>
+    <div class="logo-text">LANCMALL</div>
+  </div>
+  <div class="header-right">
+    <button class="nav-btn active" id="navQuery" onclick="showPage('query')">🔍 <span data-i18n="nav_query">查询</span></button>
+    <button class="nav-btn" id="navAdmin" onclick="showPage('admin')">⚙️ <span data-i18n="nav_admin">管理后台</span></button>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('zh')">中</button>
+      <button class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</div>
+
+<!-- 前台查询页面 -->
+<div id="pageQuery">
+  <div class="container">
+    <!-- Hero区域 -->
+    <div style="text-align: center; padding: 30px 0;">
+      <div style="display: inline-block; background: rgba(255,107,157,0.1); padding: 6px 16px; border-radius: 20px; margin-bottom: 12px;">
+        <span style="color: var(--pink); font-weight: 600; font-size: 14px;">● Lancmall</span>
+      </div>
+      <h1 style="font-size: 28px; font-weight: 800; color: var(--navy); margin-bottom: 8px;" data-i18n="hero_title">物流品类自查工具</h1>
+      <p style="color: var(--text-light); font-size: 15px; max-width: 500px; margin: 0 auto;" data-i18n="hero_subtitle">输入商品信息，自动判断货物类型并核算国际运费</p>
+    </div>
+
+    <!-- 第一步：选择商品类别 -->
+    <div class="card">
+      <div class="card-title">
+        <div class="step-number">1</div>
+        <span data-i18n="step1_title">第一步：选择商品类别</span>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label" data-i18n="major_category">大品类 <span class="required">*</span></label>
+        <select class="form-select" id="majorCategory" onchange="onMajorChange()">
+          <option value="" data-i18n="select_placeholder">请选择</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="sub_category">细分品类</label>
+        <select class="form-select" id="subCategory" onchange="onSubChange()">
+          <option value="" data-i18n="select_placeholder">请选择</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="specific_product">具体产品</label>
+        <select class="form-select" id="specificProduct" onchange="onSpecificChange()">
+          <option value="" data-i18n="select_placeholder">请选择</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="customProductGroup" style="display:none;">
+        <label class="form-label" data-i18n="custom_product">自定义产品名称</label>
+        <input type="text" class="form-input" id="customProduct" placeholder="请输入产品名称">
+      </div>
+    </div>
+
+    <!-- 第二步：货物属性 -->
+    <div class="card">
+      <div class="card-title">
+        <div class="step-number">2</div>
+        <span data-i18n="step2_title">第二步：货物属性</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">
+          <span data-i18n="power_source">供电方式</span> <span class="required">*</span>
+          <span class="hint" data-i18n="power_hint">（用于辅助判断货物类型）</span>
+        </label>
+        <div class="options-grid options-grid-3">
+          <div class="option-card" id="powerNone" onclick="selectPower('none')">
+            <div class="icon">📦</div>
+            <div class="title" data-i18n="power_none">无电池/无需插电</div>
+            <div class="desc" data-i18n="power_none_desc">普通日用品、服装、工具等</div>
+          </div>
+          <div class="option-card" id="powerPlugin" onclick="selectPower('plugin')">
+            <div class="icon">⚡</div>
+            <div class="title" data-i18n="power_plugin">插电使用</div>
+            <div class="desc" data-i18n="power_plugin_desc">家电、灯具、厨房电器等</div>
+          </div>
+          <div class="option-card" id="powerBattery" onclick="selectPower('battery')">
+            <div class="icon">🔋</div>
+            <div class="title" data-i18n="power_battery">内含电池</div>
+            <div class="desc" data-i18n="power_battery_desc">蓝牙耳机、充电宝、电动工具等</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">
+            <span data-i18n="is_brand">是否品牌类产品</span> <span class="required">*</span>
+          </label>
+          <div class="yes-no-group">
+            <button class="yes-no-btn" id="brandNo" onclick="selectBrand(false)" data-i18n="no">否</button>
+            <button class="yes-no-btn" id="brandYes" onclick="selectBrand(true)" data-i18n="yes">是</button>
+          </div>
+          <p style="font-size: 12px; color: var(--text-light); margin-top: 6px;" data-i18n="brand_hint">耐克、阿迪达斯、SKII、香奈儿、海尔、格力等知名品牌</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            <span data-i18n="is_liquid">是否液体</span> <span class="required">*</span>
+          </label>
+          <div class="yes-no-group">
+            <button class="yes-no-btn" id="liquidNo" onclick="selectLiquid(false)" data-i18n="no">否</button>
+            <button class="yes-no-btn" id="liquidYes" onclick="selectLiquid(true)" data-i18n="yes">是</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            <span data-i18n="is_powder">是否粉末</span> <span class="required">*</span>
+          </label>
+          <div class="yes-no-group">
+            <button class="yes-no-btn" id="powderNo" onclick="selectPowder(false)" data-i18n="no">否</button>
+            <button class="yes-no-btn" id="powderYes" onclick="selectPowder(true)" data-i18n="yes">是</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-info" id="propertiesTip">
+        ℹ️ <span data-i18n="properties_tip_incomplete">请完成以上六个货物属性的信息勾选。</span>
+      </div>
+    </div>
+
+    <!-- 第三步：运输方式 -->
+    <div id="shippingSection" class="hidden">
+      <div class="card">
+        <div class="card-title">
+          <div class="step-number">3</div>
+          <span data-i18n="step3_title">第三步：运输方式与运费</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="shipping_method">运输方式 <span class="required">*</span></label>
+          <div class="options-grid options-grid-2" style="grid-template-columns: 1fr 1fr;">
+            <div class="option-card" id="airMethod" onclick="selectShipping('air')">
+              <div class="icon">✈️</div>
+              <div class="title" data-i18n="air_shipping">空运</div>
+              <div class="desc" data-i18n="air_shipping_desc">小批量，10-15工作日</div>
+            </div>
+            <div class="option-card" id="seaMethod" onclick="selectShipping('sea')">
+              <div class="icon">🚢</div>
+              <div class="title" data-i18n="sea_shipping">海运</div>
+              <div class="desc" data-i18n="sea_shipping_desc">大批量，60+工作日</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="gross_weight">商品总毛重 (kg) <span class="required">*</span></label>
+          <input type="number" class="form-input" id="grossWeight" step="0.1" min="0" placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="carton_dimensions">每件商品包装纸箱尺寸 (cm) <span class="required">*</span></label>
+          <div id="cartonsContainer">
+            <!-- 动态添加纸箱尺寸 -->
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="addCarton()" style="margin-top: 8px;">+ <span data-i18n="add_carton">添加纸箱尺寸</span></button>
+        </div>
+
+        <div class="form-group" id="volumeFactorGroup">
+          <label class="form-label" data-i18n="volume_factor">体积重量换算系数</label>
+          <input type="number" class="form-input" id="volumeFactor" value="6000" min="1000" step="100">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="logistics_company">物流公司 <span class="required">*</span></label>
+          <select class="form-select" id="logisticsCompany" onchange="onCompanyChange()">
+            <option value="" data-i18n="select_company">请选择物流公司...</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="priceSection">
+          <div id="priceDisplay"></div>
+        </div>
+
+        <div class="alert alert-error hidden" id="validationError"></div>
+
+        <button class="btn btn-primary btn-block" onclick="calculateFreight()">
+          💰 <span data-i18n="calculate">核算运费</span>
+        </button>
+      </div>
+
+      <!-- 结果区域 -->
+      <div id="resultSection" class="hidden">
+        <div class="result-card">
+          <div id="resultContent"></div>
+          <div style="margin-top: 16px; display: flex; gap: 12px; justify-content: center;">
+            <button class="btn btn-outline" onclick="clearAll()">
+              🔄 <span data-i18n="clear_query">清空重新查询</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 管理后台页面 -->
+<div id="pageAdmin" class="hidden">
+  <!-- 登录界面 -->
+  <div id="adminLogin" class="login-wrap">
+    <div class="login-box">
+      <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:900;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;">LANCMALL</div>
+      <h2 data-i18n="admin_login_title">物流品类管理后台</h2>
+      <p data-i18n="admin_login_subtitle">请输入账号密码以访问后台</p>
+      <input type="text" id="adminUsername" placeholder="用户名" value="admin" style="margin-bottom: 12px;">
+      <input type="password" id="adminPassword" placeholder="密码" onkeypress="if(event.key==='Enter')adminLogin()">
+      <button onclick="adminLogin()"><span data-i18n="login">登 录</span></button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="adminMain" class="hidden">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label" data-i18n="stat_total">总查询次数</div></div>
+        <div class="stat-card"><div class="stat-value" id="statNormal">0</div><div class="stat-label" data-i18n="stat_normal">普通货</div></div>
+        <div class="stat-card"><div class="stat-value" id="statSensitive">0</div><div class="stat-label" data-i18n="stat_sensitive">敏感货</div></div>
+        <div class="stat-card"><div class="stat-value" id="statUnknown">0</div><div class="stat-label" data-i18n="stat_unknown">待确认品类</div></div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('records')" data-i18n="tab_records">查询记录</div>
+        <div class="tab" onclick="switchTab('category')" data-i18n="tab_category">品类库管理</div>
+        <div class="tab" onclick="switchTab('companies')" data-i18n="tab_companies">物流公司管理</div>
+        <div class="tab" onclick="switchTab('unknown')" data-i18n="tab_unknown">待确认品类</div>
+        <div class="tab" onclick="switchTab('accounts')" data-i18n="tab_accounts">子账号管理</div>
+      </div>
+
+      <!-- 查询记录 -->
+      <div class="tab-content active" id="tab-records">
+        <div class="card">
+          <div class="card-title">📋 <span data-i18n="records_title">查询记录列表</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="time">时间</th><th data-i18n="product_name">产品名称</th><th data-i18n="category">品类</th>
+                  <th data-i18n="shipping_method">运输方式</th><th data-i18n="gross_weight">毛重(kg)</th><th data-i18n="chargeable_weight">计费重(kg)</th><th data-i18n="quantity">数量</th><th data-i18n="action">操作</th>
+                </tr>
+              </thead>
+              <tbody id="recordsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 品类库管理 -->
+      <div class="tab-content" id="tab-category">
+        <div class="card">
+          <div class="card-title">📚 <span data-i18n="category_title">品类关键词库管理</span></div>
+          <div class="category-manage">
+            <div class="cat-section" style="border-color:var(--danger);">
+              <h4 style="color:var(--danger);">❌ <span data-i18n="banned_goods">禁止运输货物</span></h4>
+              <div class="cat-tags" id="bannedTags"></div>
+              <div class="cat-input-row">
+                <input type="text" id="bannedInput" placeholder="添加关键词...">
+                <button onclick="addKeyword('banned')" data-i18n="add">添加</button>
+              </div>
+            </div>
+            <div class="cat-section" style="border-color:var(--warning);">
+              <h4 style="color:var(--warning);">⚠️ <span data-i18n="sensitive_goods">敏感货物</span></h4>
+              <div class="cat-tags" id="sensitiveTags"></div>
+              <div class="cat-input-row">
+                <input type="text" id="sensitiveInput" placeholder="添加关键词...">
+                <button onclick="addKeyword('sensitive')" data-i18n="add">添加</button>
+              </div>
+            </div>
+            <div class="cat-section" style="border-color:var(--success);">
+              <h4 style="color:var(--success);">✅ <span data-i18n="normal_goods">普通货物</span></h4>
+              <div class="cat-tags" id="normalTags"></div>
+              <div class="cat-input-row">
+                <input type="text" id="normalInput" placeholder="添加关键词...">
+                <button onclick="addKeyword('normal')" data-i18n="add">添加</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 物流公司管理 -->
+      <div class="tab-content" id="tab-companies">
+        <div class="card">
+          <div class="card-title">🚚 <span data-i18n="companies_title">物流公司管理</span></div>
+          <button class="btn btn-primary btn-sm" onclick="showCompanyModal()" style="margin-bottom: 16px;">+ <span data-i18n="add_company">添加物流公司</span></button>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="company_name">公司名称</th><th data-i18n="transport_mode">运输方式</th>
+                  <th data-i18n="air_price">空运价格</th><th data-i18n="sea_price">海运价格</th>
+                  <th data-i18n="contact_person">收货人</th><th data-i18n="action">操作</th>
+                </tr>
+              </thead>
+              <tbody id="companiesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 待确认品类 -->
+      <div class="tab-content" id="tab-unknown">
+        <div class="card">
+          <div class="card-title">🔍 <span data-i18n="unknown_title">待确认品类查询排行</span></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th data-i18n="rank">排名</th><th data-i18n="product_name">产品名称</th><th data-i18n="count">查询次数</th><th data-i18n="action">操作</th></tr></thead>
+              <tbody id="unknownBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 子账号管理 -->
+      <div class="tab-content" id="tab-accounts">
+        <div class="card">
+          <div class="card-title">👤 <span data-i18n="accounts_title">子账号管理</span></div>
+          <button class="btn btn-primary btn-sm" onclick="showAccountModal()" style="margin-bottom: 16px;">+ <span data-i18n="add_account">添加子账号</span></button>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th data-i18n="username">用户名</th><th data-i18n="role">角色</th><th data-i18n="action">操作</th></tr></thead>
+              <tbody id="accountsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 数据定义 ====================
+
+// 18大品类三级数据
+const categoryData = {
+  'clothing': {
+    zh: '服装内衣', en: 'Clothing & Underwear',
+    children: {
+      'mens': { zh: '男装', en: "Men's Wear", children: ['T恤','衬衫','夹克','牛仔裤','西装'] },
+      'womens': { zh: '女装', en: "Women's Wear", children: ['连衣裙','上衣','半身裙','牛仔裤','外套'] },
+      'underwear': { zh: '内衣', en: 'Underwear', children: ['文胸','内裤','保暖内衣','睡衣','袜子'] }
+    }
+  },
+  'shoes_bags': {
+    zh: '时尚鞋包', en: 'Shoes & Bags',
+    children: {
+      'mens_shoes': { zh: '男鞋', en: "Men's Shoes", children: ['运动鞋','皮鞋','休闲鞋','凉鞋','靴子'] },
+      'womens_shoes': { zh: '女鞋', en: "Women's Shoes", children: ['高跟鞋','平底鞋','运动鞋','凉鞋','靴子'] },
+      'bags': { zh: '箱包', en: 'Bags', children: ['双肩包','单肩包','手提包','钱包','行李箱'] }
+    }
+  },
+  'jewelry_watches': {
+    zh: '珠宝手表', en: 'Jewelry & Watches',
+    children: {
+      'jewelry': { zh: '珠宝首饰', en: 'Jewelry', children: ['项链','手链','戒指','耳环','吊坠'] },
+      'watches': { zh: '手表', en: 'Watches', children: ['机械表','石英表','电子表','智能手表'] }
+    }
+  },
+  'sports': {
+    zh: '运动服装和器材', en: 'Sports & Fitness',
+    children: {
+      'sportswear': { zh: '运动服装', en: 'Sportswear', children: ['运动T恤','运动裤','运动外套','瑜伽服','泳衣'] },
+      'fitness': { zh: '健身器材', en: 'Fitness Equipment', children: ['哑铃','瑜伽垫','跳绳','拉力器','健腹轮'] },
+      'balls': { zh: '球类运动', en: 'Ball Sports', children: ['篮球','足球','羽毛球拍','乒乓球拍','网球拍'] }
+    }
+  },
+  'kids_toys': {
+    zh: '童装玩具', en: "Kids & Toys",
+    children: {
+      'plush': { zh: '毛绒玩具', en: 'Plush Toys', children: ['泰迪熊','玩偶','抱枕','公仔','布娃娃'] },
+      'educational': { zh: '益智玩具', en: 'Educational Toys', children: ['积木','拼图','魔方','早教机','画板'] },
+      'rc': { zh: '遥控玩具', en: 'RC Toys', children: ['遥控车','遥控飞机','遥控船','遥控机器人'] }
+    }
+  },
+  'home_daily': {
+    zh: '家居日用', en: 'Home & Daily',
+    children: {
+      'kitchen': { zh: '厨房用品', en: 'Kitchen', children: ['锅具','刀具','餐具','保温杯','保鲜盒'] },
+      'storage': { zh: '收纳整理', en: 'Storage', children: ['收纳箱','收纳盒','衣架','置物架','真空压缩袋'] },
+      'cleaning': { zh: '清洁用品', en: 'Cleaning', children: ['拖把','扫帚','垃圾桶','清洁剂','抹布'] },
+      'bedding': { zh: '床上用品', en: 'Bedding', children: ['四件套','被子','枕头','床垫','蚊帐'] }
+    }
+  },
+  'beauty': {
+    zh: '美妆日化', en: 'Beauty & Personal Care',
+    children: {
+      'skincare': { zh: '护肤', en: 'Skincare', children: ['面霜','精华','洗面奶','爽肤水','面膜'] },
+      'makeup': { zh: '彩妆', en: 'Makeup', children: ['口红','粉底','眼影','睫毛膏','卸妆水'] },
+      'fragrance': { zh: '香水', en: 'Fragrance', children: ['女士香水','男士香水','中性香水'] },
+      'personal': { zh: '个人护理', en: 'Personal Care', children: ['洗发水','沐浴露','牙膏','牙刷','剃须刀'] }
+    }
+  },
+  'pet_garden': {
+    zh: '宠物园艺用品', en: 'Pet & Garden',
+    children: {
+      'pet': { zh: '宠物用品', en: 'Pet Supplies', children: ['宠物粮','宠物玩具','宠物窝','宠物衣服','牵引绳'] },
+      'garden': { zh: '园艺用品', en: 'Garden Supplies', children: ['花盆','花土','肥料','剪刀','喷壶'] }
+    }
+  },
+  'digital_auto': {
+    zh: '数码电子/汽车配件', en: 'Digital & Auto Parts',
+    children: {
+      'phone': { zh: '手机配件', en: 'Phone Accessories', children: ['手机壳','充电器','数据线','耳机','手机膜'] },
+      'computer': { zh: '电脑配件', en: 'Computer Accessories', children: ['鼠标','键盘','U盘','移动硬盘','散热器'] },
+      'auto': { zh: '汽车配件', en: 'Auto Accessories', children: ['车载充电器','行车记录仪','汽车香水','坐垫','方向盘套'] }
+    }
+  },
+  'food_beverage': {
+    zh: '食品饮料', en: 'Food & Beverage',
+    children: {
+      'snacks': { zh: '休闲零食', en: 'Snacks', children: ['坚果','饼干','糖果','肉干','膨化食品'] },
+      'drinks': { zh: '饮料', en: 'Beverages', children: ['茶叶','咖啡','果汁','奶粉','蜂蜜'] },
+      'seasoning': { zh: '调味品', en: 'Seasonings', children: ['酱油','醋','辣椒酱','火锅底料','鸡精'] }
+    }
+  },
+  'hardware_tools': {
+    zh: '五金工具', en: 'Hardware & Tools',
+    children: {
+      'hand': { zh: '手动工具', en: 'Hand Tools', children: ['扳手','螺丝刀','钳子','锤子','卷尺'] },
+      'power': { zh: '电动工具', en: 'Power Tools', children: ['电钻','角磨机','电锯','电磨','热风枪'] },
+      'fasteners': { zh: '紧固件', en: 'Fasteners', children: ['螺丝','螺母','螺栓','膨胀螺丝','铆钉'] }
+    }
+  },
+  'office_stationery': {
+    zh: '办公文教', en: 'Office & Stationery',
+    children: {
+      'stationery': { zh: '文具', en: 'Stationery', children: ['笔','笔记本','文件夹','订书机','计算器'] },
+      'equipment': { zh: '办公设备', en: 'Office Equipment', children: ['打印机','扫描仪','碎纸机','考勤机','投影仪'] },
+      'student': { zh: '学生用品', en: 'Student Supplies', children: ['书包','文具盒','橡皮','尺子','圆规'] }
+    }
+  },
+  'electrical_lighting': {
+    zh: '电工电气/照明', en: 'Electrical & Lighting',
+    children: {
+      'lights': { zh: '灯具', en: 'Lighting', children: ['吸顶灯','吊灯','台灯','手电筒','LED灯带'] },
+      'electrical': { zh: '电气配件', en: 'Electrical', children: ['开关','插座','电线','插头','断路器'] },
+      'batteries': { zh: '电池', en: 'Batteries', children: ['干电池','充电电池','纽扣电池','蓄电池'] }
+    }
+  },
+  'home_improvement': {
+    zh: '家装建材', en: 'Home Improvement',
+    children: {
+      'bathroom': { zh: '卫浴', en: 'Bathroom', children: ['水龙头','花洒','马桶','浴室柜','地漏'] },
+      'doors_windows': { zh: '门窗', en: 'Doors & Windows', children: ['门锁','合页','门把手','窗帘杆','纱窗'] },
+      'paint': { zh: '涂料', en: 'Paint', children: ['乳胶漆','防水涂料','瓷砖胶','腻子粉','美缝剂'] }
+    }
+  },
+  'home_textile': {
+    zh: '家纺家饰', en: 'Home Textile & Decor',
+    children: {
+      'curtains': { zh: '窗帘', en: 'Curtains', children: ['遮光窗帘','纱帘','百叶窗','卷帘'] },
+      'rugs': { zh: '地毯', en: 'Rugs', children: ['客厅地毯','卧室地毯','地垫','门垫'] },
+      'decor': { zh: '装饰画', en: 'Decor', children: ['挂画','壁画','照片墙','摆件','花瓶'] }
+    }
+  },
+  'gifts_crafts': {
+    zh: '礼品工艺品', en: 'Gifts & Crafts',
+    children: {
+      'festival': { zh: '节日礼品', en: 'Festival Gifts', children: ['圣诞礼品','新年礼品','情人节礼品','生日礼品'] },
+      'crafts': { zh: '工艺品', en: 'Crafts', children: ['陶瓷','木雕','水晶','琉璃','树脂摆件'] },
+      'flowers': { zh: '鲜花绿植', en: 'Flowers & Plants', children: ['仿真花','干花','绿植盆栽','多肉','花瓶'] }
+    }
+  },
+  'medical_health': {
+    zh: '医药保健', en: 'Medicine & Health Care',
+    children: {
+      'supplements': { zh: '保健品', en: 'Supplements', children: ['维生素','蛋白粉','鱼油','钙片','益生菌'] },
+      'devices': { zh: '医疗器械', en: 'Medical Devices', children: ['体温计','血压计','血糖仪','口罩','创可贴'] },
+      'tcm': { zh: '中药', en: 'TCM', children: ['枸杞','红枣','黄芪','当归','人参'] }
+    }
+  },
+  'new_energy': {
+    zh: '新能源', en: 'New Energy',
+    children: {
+      'solar': { zh: '太阳能', en: 'Solar', children: ['太阳能板','太阳能灯','太阳能充电器','太阳能充电宝'] },
+      'storage': { zh: '储能', en: 'Energy Storage', children: ['锂电池','磷酸铁锂电池','移动电源','储能电源'] },
+      'ev': { zh: '电动车配件', en: 'EV Parts', children: ['电动车充电器','电动车电池','电动车控制器','电动车灯'] }
+    }
+  }
+};
+
+// 默认品类库关键词
+const defaultCategories = {
+  banned: ['武器','枪','弹药','爆炸','毒品','违禁','易燃','易爆','剧毒','放射性','腐蚀','色情','盗版','假币','护照','身份证','证件','雷管','火药','烟花','爆竹'],
+  sensitive: ['液体','粉末','膏','化妆品','护肤','口红','粉底','香水','面膜','指甲油','电池','充电宝','移动电源','充电','蓝牙','无线','耳机','音响','电动','食品','零食','茶叶','咖啡','保健品','营养品','蜂蜜','枸杞','红枣','药品','药','烟','酒','刀具','刀','喷雾','气压','磁性','磁铁','化学品','化工','硫酸钠','硫酸','硝酸','盐酸','氢氧化钠','碳酸钠','氯化钠','化肥','农药','涂料','油漆','油墨','染料','颜料','树脂','胶水','粘合剂','太空沙','手表','腕表','机械表','石英表','电子表','智能表'],
+  normal: ['首饰','珠宝','项链','手链','手镯','耳环','耳钉','耳坠','戒指','吊坠','胸针','发饰','发夹','发箍','发绳','脚链','毛衣链','锁骨链','珍珠项链','银饰','金饰','翡翠','玉石','玛瑙','水晶','钻石','宝石','饰品','配饰','珠宝首饰']
+};
+
+// 翻译
+const translations = {
+  zh: {
+    nav_query: '查询', nav_admin: '管理后台',
+    hero_title: '物流品类自查工具', hero_subtitle: '输入商品信息，自动判断货物类型并核算国际运费',
+    step1_title: '第一步：选择商品类别', step2_title: '第二步：货物属性', step3_title: '第三步：运输方式与运费',
+    major_category: '大品类', sub_category: '细分品类', specific_product: '具体产品', custom_product: '自定义产品名称',
+    select_placeholder: '请选择', other_option: '其他/不在列表中',
+    power_source: '供电方式', power_hint: '（用于辅助判断货物类型）',
+    power_none: '无电池/无需插电', power_none_desc: '普通日用品、服装、工具等',
+    power_plugin: '插电使用', power_plugin_desc: '家电、灯具、厨房电器等',
+    power_battery: '内含电池', power_battery_desc: '蓝牙耳机、充电宝、电动工具等',
+    is_brand: '是否品牌类产品', yes: '是', no: '否',
+    brand_hint: '耐克、阿迪达斯、SKII、香奈儿、海尔、格力等知名品牌',
+    is_liquid: '是否液体', is_powder: '是否粉末',
+    properties_tip_incomplete: '请完成以上六个货物属性的信息勾选。',
+    properties_tip_complete: '✓ 已完成，继续填写运输信息',
+    shipping_method: '运输方式', air_shipping: '空运', air_shipping_desc: '小批量，10-15工作日',
+    sea_shipping: '海运', sea_shipping_desc: '大批量，60+工作日',
+    gross_weight: '商品总毛重 (kg)', carton_dimensions: '每件商品包装纸箱尺寸 (cm)',
+    add_carton: '添加纸箱尺寸', volume_factor: '体积重量换算系数',
+    logistics_company: '物流公司', select_company: '请选择物流公司...',
+    calculate: '核算运费', clear_query: '清空重新查询',
+    admin_login_title: '物流品类管理后台', admin_login_subtitle: '请输入账号密码以访问后台',
+    login: '登 录', username: '用户名', password: '密码',
+    stat_total: '总查询次数', stat_normal: '普通货', stat_sensitive: '敏感货', stat_unknown: '待确认品类',
+    tab_records: '查询记录', tab_category: '品类库管理', tab_companies: '物流公司管理',
+    tab_unknown: '待确认品类', tab_accounts: '子账号管理',
+    records_title: '查询记录列表', category_title: '品类关键词库管理',
+    banned_goods: '禁止运输货物', sensitive_goods: '敏感货物', normal_goods: '普通货物',
+    add: '添加', add_company: '添加物流公司', companies_title: '物流公司管理',
+    company_name: '公司名称', transport_mode: '运输方式', air_price: '空运价格',
+    sea_price: '海运价格', contact_person: '收货人', action: '操作',
+    unknown_title: '待确认品类查询排行', rank: '排名', product_name: '产品名称', count: '查询次数',
+    accounts_title: '子账号管理', add_account: '添加子账号', role: '角色',
+    time: '时间', category: '品类', shipping_method: '运输方式',
+    chargeable_weight: '计费重(kg)', quantity: '数量',
+    normal: '普通货', sensitive: '敏感货', banned: '禁止运输', unknown: '待确认',
+    air: '空运', sea: '海运',
+    result_title: '查询结果', product_category: '产品类别',
+    chargeable_weight_result: '计费重量', volume_weight: '体积重量',
+    is_bulky: '是否泡货', freight_cost: '运费金额',
+    tip_normal_not_bulky: '您的商品属于普通货物，且并非泡货，请放心购买！',
+    tip_normal_bulky: '您的商品属于普通货物，但属于泡货，请确认运费是否在预算范围内。减少每件商品的平均运费，可以再购买一些实重货物来均衡整体的重量',
+    tip_sensitive: '您的商品属于敏感货，请确认物流公司是否能承运，并确认最终运费是否在预算范围内。在转运环节请务必告知仓库的交付人员！',
+    tip_banned: '您的商品疑似禁止国际运输或禁止进口到巴基斯坦的商品，请务必和物流公司确认，是否能够承运！',
+    tip_unknown: '您的商品属于我们未曾处理过的品类，为避免国际运输问题，请务必和物流公司单独确认是否可承运，并确认运费是否在预算范围内。',
+    please_select: '请选择',
+    validation_title: '以下必填项未完成，无法计算运费：',
+    err_power: '供电方式未选择',
+    err_brand: '是否品牌类产品未选择',
+    err_liquid: '是否液体未选择',
+    err_powder: '是否粉末未选择',
+    err_shipping: '运输方式未选择',
+    err_gross_weight: '商品总毛重未填写',
+    err_carton: '纸箱尺寸未填写',
+    err_company: '物流公司未选择',
+    err_price: '物流价格未填写',
+    customer_own: '客户自有物流商',
+    normal_rate: '普通货价格', sensitive_rate: '敏感货价格',
+    rate_unit_kg: 'Rs/kg', rate_unit_m3: 'Rs/m³',
+    customer_provided: '客户自填',
+    company_used: '物流公司使用',
+    edit: '编辑', delete: '删除',
+    confirm: '确认', cancel: '取消', save: '保存',
+    company_name_label: '公司名称',
+    air_transport: '空运', sea_transport: '海运',
+    air_normal_price: '空运普通货价格 (Rs/kg)',
+    air_sensitive_price: '空运敏感货价格 (Rs/kg)',
+    sea_normal_price: '海运普通货价格 (Rs/m³)',
+    sea_sensitive_price: '海运敏感货价格 (Rs/m³)',
+    contact_name: '收货人姓名',
+    contact_phone: '收货人电话',
+    contact_address: '收货地址',
+    add_new_company: '添加新物流公司',
+    edit_company: '编辑物流公司',
+    delete_company_confirm: '确定删除这个物流公司吗？',
+    username_label: '用户名（英文+数字）',
+    password_label: '密码（英文+数字）',
+    add_new_account: '添加新子账号',
+    delete_account_confirm: '确定删除这个子账号吗？',
+    admin_user: '管理员',
+    sub_user: '子账号',
+    login_failed: '用户名或密码错误'
+  },
+  en: {
+    nav_query: 'Query', nav_admin: 'Admin',
+    hero_title: 'Logistics Category Checker', hero_subtitle: 'Enter product info to auto-detect cargo type and calculate international freight',
+    step1_title: 'Step 1: Select Product Category', step2_title: 'Step 2: Cargo Properties', step3_title: 'Step 3: Shipping & Freight',
+    major_category: 'Major Category', sub_category: 'Sub Category', specific_product: 'Specific Product', custom_product: 'Custom Product Name',
+    select_placeholder: 'Please select', other_option: 'Other / Not in list',
+    power_source: 'Power Source', power_hint: '(to help determine cargo type)',
+    power_none: 'No Battery / No Plug', power_none_desc: 'Daily goods, clothing, tools, etc.',
+    power_plugin: 'Plug-in Powered', power_plugin_desc: 'Appliances, lamps, kitchen electronics, etc.',
+    power_battery: 'Built-in Battery', power_battery_desc: 'Bluetooth earphones, power banks, power tools, etc.',
+    is_brand: 'Is Brand Product', yes: 'Yes', no: 'No',
+    brand_hint: 'Nike, Adidas, SKII, Chanel, Haier, Gree, etc.',
+    is_liquid: 'Is Liquid', is_powder: 'Is Powder',
+    properties_tip_incomplete: 'Please complete all six cargo property selections above.',
+    properties_tip_complete: '✓ Completed, continue to fill in shipping information',
+    shipping_method: 'Shipping Method', air_shipping: 'Air Freight', air_shipping_desc: 'Small batches, 10-15 working days',
+    sea_shipping: 'Sea Freight', sea_shipping_desc: 'Large batches, 60+ working days',
+    gross_weight: 'Total Gross Weight (kg)', carton_dimensions: 'Carton Dimensions per Piece (cm)',
+    add_carton: 'Add Carton Dimension', volume_factor: 'Volume Weight Conversion Factor',
+    logistics_company: 'Logistics Company', select_company: 'Please select a logistics company...',
+    calculate: 'Calculate Freight', clear_query: 'Clear & Query Again',
+    admin_login_title: 'Logistics Category Admin Panel', admin_login_subtitle: 'Please enter credentials to access admin',
+    login: 'Login', username: 'Username', password: 'Password',
+    stat_total: 'Total Queries', stat_normal: 'Normal Goods', stat_sensitive: 'Sensitive Goods', stat_unknown: 'Unknown Categories',
+    tab_records: 'Query Records', tab_category: 'Category Library', tab_companies: 'Logistics Companies',
+    tab_unknown: 'Unknown Categories', tab_accounts: 'Sub Accounts',
+    records_title: 'Query Records', category_title: 'Category Keyword Library',
+    banned_goods: 'Prohibited Goods', sensitive_goods: 'Sensitive Goods', normal_goods: 'Normal Goods',
+    add: 'Add', add_company: 'Add Logistics Company', companies_title: 'Logistics Companies',
+    company_name: 'Company Name', transport_mode: 'Transport Mode', air_price: 'Air Price',
+    sea_price: 'Sea Price', contact_person: 'Contact Person', action: 'Action',
+    unknown_title: 'Unknown Category Ranking', rank: 'Rank', product_name: 'Product Name', count: 'Count',
+    accounts_title: 'Sub Account Management', add_account: 'Add Sub Account', role: 'Role',
+    time: 'Time', category: 'Category', shipping_method: 'Shipping Method',
+    chargeable_weight: 'Chargeable Weight (kg)', quantity: 'Quantity',
+    normal: 'Normal', sensitive: 'Sensitive', banned: 'Prohibited', unknown: 'Unknown',
+    air: 'Air', sea: 'Sea',
+    result_title: 'Query Result', product_category: 'Product Category',
+    chargeable_weight_result: 'Chargeable Weight', volume_weight: 'Volume Weight',
+    is_bulky: 'Is Bulky', freight_cost: 'Freight Cost',
+    tip_normal_not_bulky: 'Your product is normal cargo and not bulky. Feel free to purchase!',
+    tip_normal_bulky: 'Your product is normal cargo but bulky. Please confirm the freight is within your budget. You can balance the average shipping cost per item by adding more dense goods.',
+    tip_sensitive: 'Your product is sensitive cargo. Please confirm the logistics company can handle it and the final freight is within budget. Please inform the warehouse staff during transfer!',
+    tip_banned: 'Your product appears to be prohibited for international shipping or import to Pakistan. Please confirm with the logistics company whether it can be shipped!',
+    tip_unknown: 'Your product is a category we have not handled before. To avoid shipping issues, please confirm separately with the logistics company whether it can be shipped and confirm the freight is within budget.',
+    please_select: 'Please select',
+    validation_title: 'The following required fields are incomplete, cannot calculate freight:',
+    err_power: 'Power source not selected',
+    err_brand: 'Is brand not selected',
+    err_liquid: 'Is liquid not selected',
+    err_powder: 'Is powder not selected',
+    err_shipping: 'Shipping method not selected',
+    err_gross_weight: 'Total gross weight not filled',
+    err_carton: 'Carton dimensions not filled',
+    err_company: 'Logistics company not selected',
+    err_price: 'Price not filled',
+    customer_own: "Customer's own logistics company",
+    normal_rate: 'Normal Rate', sensitive_rate: 'Sensitive Rate',
+    rate_unit_kg: 'Rs/kg', rate_unit_m3: 'Rs/m³',
+    customer_provided: 'Customer provided',
+    company_used: 'Used company',
+    edit: 'Edit', delete: 'Delete',
+    confirm: 'Confirm', cancel: 'Cancel', save: 'Save',
+    company_name_label: 'Company Name',
+    air_transport: 'Air Freight', sea_transport: 'Sea Freight',
+    air_normal_price: 'Air Normal Price (Rs/kg)',
+    air_sensitive_price: 'Air Sensitive Price (Rs/kg)',
+    sea_normal_price: 'Sea Normal Price (Rs/m³)',
+    sea_sensitive_price: 'Sea Sensitive Price (Rs/m³)',
+    contact_name: 'Contact Name',
+    contact_phone: 'Contact Phone',
+    contact_address: 'Contact Address',
+    add_new_company: 'Add New Logistics Company',
+    edit_company: 'Edit Logistics Company',
+    delete_company_confirm: 'Are you sure to delete this logistics company?',
+    username_label: 'Username (letters + numbers)',
+    password_label: 'Password (letters + numbers)',
+    add_new_account: 'Add New Sub Account',
+    delete_account_confirm: 'Are you sure to delete this sub account?',
+    admin_user: 'Admin',
+    sub_user: 'Sub Account',
+    login_failed: 'Invalid username or password'
+  }
+};
+
+// ==================== 状态管理 ====================
+
+let currentLang = localStorage.getItem('lancmall_lang') || 'zh';
+let queryState = {
+  majorCategory: '',
+  subCategory: '',
+  specificProduct: '',
+  customProduct: '',
+  powerType: '',
+  isBrand: null,
+  isLiquid: null,
+  isPowder: null,
+  confirmedCategory: '', // normal / sensitive
+  shippingMethod: '', // air / sea
+  grossWeight: '',
+  cartons: [{ length: '', width: '', height: '', quantity: '' }],
+  volumeFactor: 6000,
+  logisticsCompany: '',
+  customerOwnPrice: ''
+};
+
+// ==================== 初始化 ====================
+
+function init() {
+  initCategorySelects();
+  initCartons();
+  setLang(currentLang);
+  checkAdminLogin();
+}
+
+// 初始化品类下拉
+function initCategorySelects() {
+  const majorSelect = document.getElementById('majorCategory');
+  majorSelect.innerHTML = `<option value="">${t('select_placeholder')}</option>`;
+  Object.keys(categoryData).forEach(key => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = categoryData[key][currentLang];
+    majorSelect.appendChild(opt);
+  });
+  // 添加"其他"选项
+  const otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = t('other_option');
+  majorSelect.appendChild(otherOpt);
+}
+
+function onMajorChange() {
+  const val = document.getElementById('majorCategory').value;
+  const subSelect = document.getElementById('subCategory');
+  const specSelect = document.getElementById('specificProduct');
+  const customGroup = document.getElementById('customProductGroup');
+
+  queryState.majorCategory = val;
+  queryState.subCategory = '';
+  queryState.specificProduct = '';
+  queryState.customProduct = '';
+
+  customGroup.style.display = 'none';
+  subSelect.innerHTML = `<option value="">${t('select_placeholder')}</option>`;
+  specSelect.innerHTML = `<option value="">${t('select_placeholder')}</option>`;
+
+  if (val === '__other__') {
+    customGroup.style.display = 'block';
+    return;
+  }
+
+  if (categoryData[val]) {
+    Object.keys(categoryData[val].children).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      opt.textContent = categoryData[val].children[key][currentLang];
+      subSelect.appendChild(opt);
+    });
+    const otherOpt = document.createElement('option');
+    otherOpt.value = '__other__';
+    otherOpt.textContent = t('other_option');
+    subSelect.appendChild(otherOpt);
+  }
+  checkPropertiesComplete();
+}
+
+function onSubChange() {
+  const major = document.getElementById('majorCategory').value;
+  const sub = document.getElementById('subCategory').value;
+  const specSelect = document.getElementById('specificProduct');
+
+  queryState.subCategory = sub;
+  queryState.specificProduct = '';
+
+  specSelect.innerHTML = `<option value="">${t('select_placeholder')}</option>`;
+
+  if (sub === '__other__' || !categoryData[major] || !categoryData[major].children[sub]) {
+    return;
+  }
+
+  const children = categoryData[major].children[sub].children;
+  children.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item;
+    opt.textContent = item;
+    specSelect.appendChild(opt);
+  });
+  const otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = t('other_option');
+  specSelect.appendChild(otherOpt);
+}
+
+function onSpecificChange() {
+  queryState.specificProduct = document.getElementById('specificProduct').value;
+}
+
+// 初始化纸箱
+function initCartons() {
+  renderCartons();
+}
+
+function renderCartons() {
+  const container = document.getElementById('cartonsContainer');
+  container.innerHTML = '';
+  queryState.cartons.forEach((carton, index) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:end;';
+    row.innerHTML = `
+      <div style="flex:1;">
+        <label style="font-size:11px;color:var(--text-light);">${index + 1}. 长 L (cm)</label>
+        <input type="number" class="form-input" style="padding:8px 10px;font-size:13px;" placeholder="0" value="${carton.length}" onchange="updateCarton(${index},'length',this.value)">
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:11px;color:var(--text-light);">宽 W (cm)</label>
+        <input type="number" class="form-input" style="padding:8px 10px;font-size:13px;" placeholder="0" value="${carton.width}" onchange="updateCarton(${index},'width',this.value)">
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:11px;color:var(--text-light);">高 H (cm)</label>
+        <input type="number" class="form-input" style="padding:8px 10px;font-size:13px;" placeholder="0" value="${carton.height}" onchange="updateCarton(${index},'height',this.value)">
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:11px;color:var(--text-light);">数量 Qty</label>
+        <input type="number" class="form-input" style="padding:8px 10px;font-size:13px;" placeholder="0" value="${carton.quantity}" onchange="updateCarton(${index},'quantity',this.value)">
+      </div>
+      ${index > 0 ? `<button type="button" class="btn btn-danger btn-sm" onclick="removeCarton(${index})" style="margin-bottom:0;">×</button>` : ''}
+    `;
+    container.appendChild(row);
+  });
+}
+
+function addCarton() {
+  queryState.cartons.push({ length: '', width: '', height: '', quantity: '' });
+  renderCartons();
+}
+
+function removeCarton(index) {
+  if (queryState.cartons.length <= 1) return;
+  queryState.cartons.splice(index, 1);
+  renderCartons();
+}
+
+function updateCarton(index, field, value) {
+  queryState.cartons[index][field] = value;
+}
+
+// ==================== 选项选择 ====================
+
+function selectPower(type) {
+  queryState.powerType = type;
+  ['none', 'plugin', 'battery'].forEach(t => {
+    document.getElementById('power' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('selected');
+  });
+  document.getElementById('power' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('selected');
+  checkPropertiesComplete();
+}
+
+function selectBrand(val) {
+  queryState.isBrand = val;
+  document.getElementById('brandYes').classList.toggle('selected', val === true);
+  document.getElementById('brandNo').classList.toggle('selected', val === false);
+  checkPropertiesComplete();
+}
+
+function selectLiquid(val) {
+  queryState.isLiquid = val;
+  document.getElementById('liquidYes').classList.toggle('selected', val === true);
+  document.getElementById('liquidNo').classList.toggle('selected', val === false);
+  checkPropertiesComplete();
+}
+
+function selectPowder(val) {
+  queryState.isPowder = val;
+  document.getElementById('powderYes').classList.toggle('selected', val === true);
+  document.getElementById('powderNo').classList.toggle('selected', val === false);
+  checkPropertiesComplete();
+}
+
+// 检查货物属性是否全部完成
+function checkPropertiesComplete() {
+  const complete = queryState.powerType && queryState.isBrand !== null && queryState.isLiquid !== null && queryState.isPowder !== null;
+  const shippingSection = document.getElementById('shippingSection');
+  const tip = document.getElementById('propertiesTip');
+  
+  if (complete) {
+    shippingSection.classList.remove('hidden');
+    tip.className = 'alert alert-success';
+    tip.innerHTML = '✓ ' + t('properties_tip_complete');
+    // 自动判断品类
+    detectCategory();
+  } else {
+    shippingSection.classList.add('hidden');
+    tip.className = 'alert alert-info';
+    tip.innerHTML = 'ℹ️ ' + t('properties_tip_incomplete');
+  }
+  return complete;
+}
+
+// ==================== 品类判断 ====================
+
+function getProductName() {
+  if (queryState.majorCategory === '__other__' || queryState.specificProduct === '__other__') {
+    return document.getElementById('customProduct').value || '未知产品';
+  }
+  const parts = [];
+  if (queryState.majorCategory && categoryData[queryState.majorCategory]) {
+    parts.push(categoryData[queryState.majorCategory][currentLang]);
+  }
+  if (queryState.subCategory && categoryData[queryState.majorCategory]?.children[queryState.subCategory]) {
+    parts.push(categoryData[queryState.majorCategory].children[queryState.subCategory][currentLang]);
+  }
+  if (queryState.specificProduct && queryState.specificProduct !== '__other__') {
+    parts.push(queryState.specificProduct);
+  }
+  return parts.join(' / ') || '未知产品';
+}
+
+function loadCategories() {
+  const saved = localStorage.getItem('lancmall_category_db');
+  if (saved) { try { return JSON.parse(saved); } catch(e) {} }
+  return JSON.parse(JSON.stringify(defaultCategories));
+}
+
+function detectCategory() {
+  const cats = loadCategories();
+  const productName = getProductName().toLowerCase();
+  
+  // 1. 禁运品
+  if (cats.banned.some(kw => productName.includes(kw.toLowerCase()))) {
+    queryState.confirmedCategory = 'banned';
+    return 'banned';
+  }
+  // 2. 液体
+  if (queryState.isLiquid === true) {
+    queryState.confirmedCategory = 'sensitive';
+    return 'sensitive';
+  }
+  // 3. 粉末
+  if (queryState.isPowder === true) {
+    queryState.confirmedCategory = 'sensitive';
+    return 'sensitive';
+  }
+  // 4. 品牌
+  if (queryState.isBrand === true) {
+    queryState.confirmedCategory = 'sensitive';
+    return 'sensitive';
+  }
+  // 5. 医药保健
+  if (queryState.majorCategory === 'medical_health') {
+    queryState.confirmedCategory = 'sensitive';
+    return 'sensitive';
+  }
+  // 6. 新能源
+  if (queryState.majorCategory === 'new_energy') {
+    queryState.confirmedCategory = 'sensitive';
+    return 'sensitive';
+  }
+  // 7. 手表
+  if (queryState.subCategory === 'watches' || productName.includes('手表') || productName.includes('watch')) {
+    queryState.confirmedCategory = 'sensitive';
+    return 'sensitive';
+  }
+  // 8. 敏感货关键词
+  if (cats.sensitive.some(kw => productName.includes(kw.toLowerCase()))) {
+    queryState.confirmedCategory = 'sensitive';
+    return 'sensitive';
+  }
+  // 9. 内含电池
+  if (queryState.powerType === 'battery') {
+    queryState.confirmedCategory = 'sensitive';
+    return 'sensitive';
+  }
+  // 10. 普通货关键词
+  if (cats.normal.some(kw => productName.includes(kw.toLowerCase()))) {
+    if ((queryState.powerType === 'none' || queryState.powerType === 'plugin') && 
+        queryState.isLiquid === false && queryState.isPowder === false) {
+      queryState.confirmedCategory = 'normal';
+      return 'normal';
+    }
+  }
+  // 11. 未匹配
+  queryState.confirmedCategory = 'unknown';
+  return 'unknown';
+}
+
+// ==================== 运输方式 ====================
+
+function selectShipping(method) {
+  queryState.shippingMethod = method;
+  document.getElementById('airMethod').classList.toggle('selected', method === 'air');
+  document.getElementById('seaMethod').classList.toggle('selected', method === 'sea');
+  loadCompanies();
+  updatePriceDisplay();
+}
+
+function loadCompanies() {
+  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+  const select = document.getElementById('logisticsCompany');
+  select.innerHTML = `<option value="">${t('select_company')}</option>`;
+  
+  companies.forEach(c => {
+    if (c.shippingMethods.includes(queryState.shippingMethod)) {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.name;
+      select.appendChild(opt);
+    }
+  });
+  
+  // 添加客户自有物流商选项
+  const ownOpt = document.createElement('option');
+  ownOpt.value = 'customer_own';
+  ownOpt.textContent = t('customer_own');
+  select.appendChild(ownOpt);
+}
+
+function onCompanyChange() {
+  queryState.logisticsCompany = document.getElementById('logisticsCompany').value;
+  updatePriceDisplay();
+}
+
+function updatePriceDisplay() {
+  const container = document.getElementById('priceDisplay');
+  if (!queryState.shippingMethod || !queryState.logisticsCompany) {
+    container.innerHTML = `<div class="alert alert-info">${t('select_company')}</div>`;
+    return;
+  }
+  
+  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+  const category = queryState.confirmedCategory;
+  
+  if (queryState.logisticsCompany === 'customer_own') {
+    // 客户自有物流商
+    const rateKey = category === 'normal' ? 'normalRate' : 'sensitiveRate';
+    container.innerHTML = `
+      <div class="alert alert-info">${t('customer_own')} - ${t('customer_provided')}</div>
+      <div class="form-group">
+        <label class="form-label">${category === 'normal' ? t('normal_rate') : t('sensitive_rate')} (${queryState.shippingMethod === 'air' ? t('rate_unit_kg') : t('rate_unit_m3')}) <span class="required">*</span></label>
+        <input type="number" class="form-input" id="customerOwnPrice" placeholder="0" value="${queryState.customerOwnPrice}" onchange="queryState.customerOwnPrice=this.value">
+      </div>
+    `;
+  } else {
+    // 录入物流商
+    const company = companies.find(c => c.id == queryState.logisticsCompany);
+    if (!company) return;
+    
+    const price = queryState.shippingMethod === 'air' 
+      ? (category === 'normal' ? company.airNormalPrice : company.airSensitivePrice)
+      : (category === 'normal' ? company.seaNormalPrice : company.seaSensitivePrice);
+    const unit = queryState.shippingMethod === 'air' ? t('rate_unit_kg') : t('rate_unit_m3');
+    
+    container.innerHTML = `
+      <div class="alert alert-success">
+        🔒 ${category === 'normal' ? t('normal_rate') : t('sensitive_rate')}: ${price} ${unit}
+      </div>
+    `;
+  }
+}
+
+// ==================== 计算运费 ====================
+
+function calculateFreight() {
+  const errors = [];
+  
+  if (!queryState.powerType) errors.push(t('err_power'));
+  if (queryState.isBrand === null) errors.push(t('err_brand'));
+  if (queryState.isLiquid === null) errors.push(t('err_liquid'));
+  if (queryState.isPowder === null) errors.push(t('err_powder'));
+  if (!queryState.shippingMethod) errors.push(t('err_shipping'));
+  if (!queryState.grossWeight || parseFloat(queryState.grossWeight) <= 0) errors.push(t('err_gross_weight'));
+  if (!queryState.cartons.some(c => c.length && c.width && c.height && c.quantity)) errors.push(t('err_carton'));
+  if (!queryState.logisticsCompany) errors.push(t('err_company'));
+  
+  // 客户自有物流商需要价格
+  if (queryState.logisticsCompany === 'customer_own' && (!queryState.customerOwnPrice || parseFloat(queryState.customerOwnPrice) <= 0)) {
+    errors.push(t('err_price'));
+  }
+  
+  if (errors.length > 0) {
+    const errBox = document.getElementById('validationError');
+    errBox.innerHTML = `⚠️ ${t('validation_title')}<ul style="margin:8px 0 0 20px;padding:0;">${errors.map(e => `<li>${e}</li>`).join('')}</ul>`;
+    errBox.classList.remove('hidden');
+    errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  
+  document.getElementById('validationError').classList.add('hidden');
+  
+  // 计算体积
+  let totalVolume = 0;
+  let totalQuantity = 0;
+  queryState.cartons.forEach(c => {
+    const vol = parseFloat(c.length) * parseFloat(c.width) * parseFloat(c.height);
+    const qty = parseInt(c.quantity) || 0;
+    totalVolume += vol * qty;
+    totalQuantity += qty;
+  });
+  
+  const grossWeight = parseFloat(queryState.grossWeight);
+  let volumeWeight, chargeableWeight, freightCost;
+  
+  if (queryState.shippingMethod === 'air') {
+    // 空运
+    volumeWeight = totalVolume / queryState.volumeFactor;
+    chargeableWeight = Math.max(grossWeight, volumeWeight);
+    // 0.5kg进位
+    chargeableWeight = Math.ceil(chargeableWeight * 2) / 2;
+    
+    // 价格
+    let price;
+    if (queryState.logisticsCompany === 'customer_own') {
+      price = parseFloat(queryState.customerOwnPrice);
+    } else {
+      const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+      const company = companies.find(c => c.id == queryState.logisticsCompany);
+      price = queryState.confirmedCategory === 'normal' ? company.airNormalPrice : company.airSensitivePrice;
+    }
+    freightCost = chargeableWeight * price;
+  } else {
+    // 海运
+    const volumeM3 = totalVolume / 1000000; // cm³ → m³
+    chargeableWeight = Math.ceil(volumeM3); // 1m³进位
+    
+    let price;
+    if (queryState.logisticsCompany === 'customer_own') {
+      price = parseFloat(queryState.customerOwnPrice);
+    } else {
+      const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+      const company = companies.find(c => c.id == queryState.logisticsCompany);
+      price = queryState.confirmedCategory === 'normal' ? company.seaNormalPrice : company.seaSensitivePrice;
+    }
+    freightCost = chargeableWeight * price;
+    volumeWeight = volumeM3;
+  }
+  
+  const isBulky = volumeWeight > grossWeight;
+  const category = queryState.confirmedCategory;
+  
+  // 购买提示
+  let tipText = '';
+  let tipClass = 'alert-info';
+  if (category === 'normal' && !isBulky) {
+    tipText = t('tip_normal_not_bulky');
+    tipClass = 'alert-success';
+  } else if (category === 'normal' && isBulky) {
+    tipText = t('tip_normal_bulky');
+    tipClass = 'alert-warning';
+  } else if (category === 'sensitive') {
+    tipText = t('tip_sensitive');
+    tipClass = 'alert-warning';
+  } else if (category === 'banned') {
+    tipText = t('tip_banned');
+    tipClass = 'alert-error';
+  } else {
+    tipText = t('tip_unknown');
+    tipClass = 'alert-info';
+  }
+  
+  // 显示结果
+  const resultContent = document.getElementById('resultContent');
+  const catMap = { normal: t('normal'), sensitive: t('sensitive'), banned: t('banned'), unknown: t('unknown') };
+  const companyName = queryState.logisticsCompany === 'customer_own' ? t('customer_own') : 
+    (JSON.parse(localStorage.getItem('lancmall_companies') || '[]').find(c => c.id == queryState.logisticsCompany)?.name || '');
+  
+  resultContent.innerHTML = `
+    <div style="text-align:center;margin-bottom:16px;">
+      <span class="badge ${category}" style="font-size:16px;padding:8px 20px;">${catMap[category] || category}</span>
+    </div>
+    <div class="result-item"><span class="label">${t('product_category')}</span><span class="value">${getProductName()}</span></div>
+    <div class="result-item"><span class="label">${t('shipping_method')}</span><span class="value">${queryState.shippingMethod === 'air' ? t('air') : t('sea')}</span></div>
+    <div class="result-item"><span class="label">${t('gross_weight')}</span><span class="value">${grossWeight.toFixed(2)} kg</span></div>
+    <div class="result-item"><span class="label">${t('volume_weight')}</span><span class="value">${volumeWeight.toFixed(2)} ${queryState.shippingMethod === 'air' ? 'kg' : 'm³'}</span></div>
+    <div class="result-item"><span class="label">${t('chargeable_weight_result')}</span><span class="value highlight">${chargeableWeight.toFixed(2)} ${queryState.shippingMethod === 'air' ? 'kg' : 'm³'}</span></div>
+    <div class="result-item"><span class="label">${t('is_bulky')}</span><span class="value">${isBulky ? '⚠️ ' + t('yes') : '✅ ' + t('no')}</span></div>
+    <div class="result-item"><span class="label">${t('logistics_company')}</span><span class="value">${companyName}</span></div>
+    <div class="result-item"><span class="label">${t('freight_cost')}</span><span class="value highlight">Rs ${freightCost.toFixed(2)}</span></div>
+    <div class="alert ${tipClass}" style="margin-top:16px;">${tipText}</div>
+  `;
+  
+  document.getElementById('resultSection').classList.remove('hidden');
+  document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  
+  // 保存查询记录
+  saveRecord({
+    id: Date.now(),
+    timestamp: new Date().toLocaleString(),
+    productName: getProductName(),
+    category: category,
+    shippingMethod: queryState.shippingMethod,
+    totalGrossWeight: grossWeight,
+    totalVolumeWeight: volumeWeight,
+    chargeableWeight: chargeableWeight,
+    quantity: totalQuantity,
+    isBulky: isBulky,
+    freightCost: freightCost
+  });
+}
+
+function saveRecord(record) {
+  const records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
+  records.unshift(record);
+  localStorage.setItem('lancmall_query_records', JSON.stringify(records.slice(0, 500)));
+}
+
+function clearAll() {
+  queryState = {
+    majorCategory: '', subCategory: '', specificProduct: '', customProduct: '',
+    powerType: '', isBrand: null, isLiquid: null, isPowder: null,
+    confirmedCategory: '', shippingMethod: '', grossWeight: '',
+    cartons: [{ length: '', width: '', height: '', quantity: '' }],
+    volumeFactor: 6000, logisticsCompany: '', customerOwnPrice: ''
+  };
+  
+  document.getElementById('majorCategory').value = '';
+  document.getElementById('subCategory').value = '';
+  document.getElementById('specificProduct').value = '';
+  document.getElementById('customProduct').value = '';
+  document.getElementById('customProductGroup').style.display = 'none';
+  document.getElementById('grossWeight').value = '';
+  document.getElementById('logisticsCompany').value = '';
+  document.getElementById('volumeFactor').value = '6000';
+  
+  ['none', 'plugin', 'battery'].forEach(t => {
+    document.getElementById('power' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('selected');
+  });
+  ['brand', 'liquid', 'powder'].forEach(name => {
+    document.getElementById(name + 'Yes').classList.remove('selected');
+    document.getElementById(name + 'No').classList.remove('selected');
+  });
+  document.getElementById('airMethod').classList.remove('selected');
+  document.getElementById('seaMethod').classList.remove('selected');
+  
+  renderCartons();
+  checkPropertiesComplete();
+  document.getElementById('resultSection').classList.add('hidden');
+  document.getElementById('validationError').classList.add('hidden');
+  document.getElementById('pageQuery').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ==================== 管理后台 ====================
+
+function showPage(page) {
+  document.getElementById('pageQuery').classList.toggle('hidden', page !== 'query');
+  document.getElementById('pageAdmin').classList.toggle('hidden', page !== 'admin');
+  document.getElementById('navQuery').classList.toggle('active', page === 'query');
+  document.getElementById('navAdmin').classList.toggle('active', page === 'admin');
+  
+  if (page === 'admin') {
+    checkAdminLogin();
+  }
+}
+
+function checkAdminLogin() {
+  const logged = sessionStorage.getItem('lancmall_admin_logged');
+  if (logged === 'true') {
+    showAdminMain();
+  } else {
+    document.getElementById('adminLogin').style.display = 'flex';
+    document.getElementById('adminMain').classList.add('hidden');
+  }
+}
+
+function adminLogin() {
+  const username = document.getElementById('adminUsername').value.trim();
+  const password = document.getElementById('adminPassword').value.trim();
+  
+  const accounts = JSON.parse(localStorage.getItem('lancmall_accounts') || '[]');
+  const adminAccount = { username: 'admin', password: 'LyxMarylpo123', role: 'admin' };
+  
+  const allAccounts = [adminAccount, ...accounts];
+  const found = allAccounts.find(a => a.username === username && a.password === password);
+  
+  if (found) {
+    sessionStorage.setItem('lancmall_admin_logged', 'true');
+    sessionStorage.setItem('lancmall_admin_user', username);
+    showAdminMain();
+  } else {
+    document.getElementById('loginError').textContent = t('login_failed');
+  }
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('lancmall_admin_logged');
+  sessionStorage.removeItem('lancmall_admin_user');
+  document.getElementById('adminLogin').style.display = 'flex';
+  document.getElementById('adminMain').classList.add('hidden');
+}
+
+function showAdminMain() {
+  document.getElementById('adminLogin').style.display = 'none';
+  document.getElementById('adminMain').classList.remove('hidden');
+  loadAdminData();
+}
+
+function loadAdminData() {
+  renderStats();
+  renderRecords();
+  renderCategoryTags();
+  renderCompanies();
+  renderUnknownRanking();
+  renderAccounts();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function renderStats() {
+  const records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
+  document.getElementById('statTotal').textContent = records.length;
+  document.getElementById('statNormal').textContent = records.filter(r => r.category === 'normal').length;
+  document.getElementById('statSensitive').textContent = records.filter(r => r.category === 'sensitive').length;
+  document.getElementById('statUnknown').textContent = records.filter(r => r.category === 'unknown').length;
+}
+
+function renderRecords() {
+  const records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
+  const tbody = document.getElementById('recordsBody');
+  const catMap = { normal: t('normal'), sensitive: t('sensitive'), banned: t('banned'), unknown: t('unknown') };
+  
+  tbody.innerHTML = records.slice(0, 100).map(r => `
+    <tr>
+      <td style="font-size:12px;">${r.timestamp || ''}</td>
+      <td style="font-weight:600;">${r.productName}</td>
+      <td><span class="badge ${r.category}">${catMap[r.category] || r.category}</span></td>
+      <td><span class="badge ${r.shippingMethod}">${r.shippingMethod === 'air' ? t('air') : t('sea')}</span></td>
+      <td>${(r.totalGrossWeight || 0).toFixed(2)}</td>
+      <td style="font-weight:700;color:var(--pink);">${(r.chargeableWeight || 0).toFixed(2)}</td>
+      <td>${r.quantity || 0}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">${t('delete')}</button></td>
+    </tr>
+  `).join('');
+}
+
+function deleteRecord(id) {
+  if (!confirm(t('confirm') + '?')) return;
+  let records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
+  records = records.filter(r => r.id !== id);
+  localStorage.setItem('lancmall_query_records', JSON.stringify(records));
+  loadAdminData();
+}
+
+// 品类库
+function renderCategoryTags() {
+  const cats = loadCategories();
+  ['banned', 'sensitive', 'normal'].forEach(type => {
+    const container = document.getElementById(type + 'Tags');
+    container.innerHTML = (cats[type] || []).map(kw => `
+      <span class="cat-tag">${kw}<span class="remove" onclick="removeKeyword('${type}','${kw.replace(/'/g,"\\'")}')">&times;</span></span>
+    `).join('');
+  });
+}
+
+function addKeyword(type) {
+  const input = document.getElementById(type + 'Input');
+  const kw = input.value.trim();
+  if (!kw) return;
+  const cats = loadCategories();
+  if (!cats[type]) cats[type] = [];
+  if (!cats[type].includes(kw)) {
+    cats[type].push(kw);
+    localStorage.setItem('lancmall_category_db', JSON.stringify(cats));
+    renderCategoryTags();
+  }
+  input.value = '';
+}
+
+function removeKeyword(type, kw) {
+  const cats = loadCategories();
+  cats[type] = (cats[type] || []).filter(k => k !== kw);
+  localStorage.setItem('lancmall_category_db', JSON.stringify(cats));
+  renderCategoryTags();
+}
+
+// 物流公司
+function renderCompanies() {
+  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+  const tbody = document.getElementById('companiesBody');
+  
+  if (companies.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-light);">暂无物流公司</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = companies.map(c => `
+    <tr>
+      <td style="font-weight:600;">${c.name}</td>
+      <td>${c.shippingMethods.map(m => `<span class="badge ${m}">${m === 'air' ? t('air_transport') : t('sea_transport')}</span>`).join(' ')}</td>
+      <td>${c.airNormalPrice || '-'} / ${c.airSensitivePrice || '-'}</td>
+      <td>${c.seaNormalPrice || '-'} / ${c.seaSensitivePrice || '-'}</td>
+      <td>${c.contactName || ''}<br><small>${c.contactPhone || ''}</small></td>
+      <td>
+        <button class="btn btn-outline btn-sm" onclick="editCompany(${c.id})">${t('edit')}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCompany(${c.id})">${t('delete')}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function showCompanyModal(company = null) {
+  // 简单的prompt对话框（实际项目中应该用模态框）
+  const name = company ? company.name : prompt(t('company_name_label') + ':');
+  if (!name) return;
+  
+  const air = confirm(t('air_transport') + '?') ? true : false;
+  const sea = confirm(t('sea_transport') + '?') ? true : false;
+  
+  let airNormalPrice = '', airSensitivePrice = '', seaNormalPrice = '', seaSensitivePrice = '';
+  if (air) {
+    airNormalPrice = prompt(t('air_normal_price') + ':') || '0';
+    airSensitivePrice = prompt(t('air_sensitive_price') + ':') || '0';
+  }
+  if (sea) {
+    seaNormalPrice = prompt(t('sea_normal_price') + ':') || '0';
+    seaSensitivePrice = prompt(t('sea_sensitive_price') + ':') || '0';
+  }
+  
+  const contactName = prompt(t('contact_name') + ':') || '';
+  const contactPhone = prompt(t('contact_phone') + ':') || '';
+  const contactAddress = prompt(t('contact_address') + ':') || '';
+  
+  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+  
+  if (company) {
+    const idx = companies.findIndex(c => c.id === company.id);
+    companies[idx] = { ...companies[idx], name, shippingMethods: [air?'air':null, sea?'sea':null].filter(Boolean), airNormalPrice, airSensitivePrice, seaNormalPrice, seaSensitivePrice, contactName, contactPhone, contactAddress };
+  } else {
+    companies.push({
+      id: Date.now(),
+      name,
+      shippingMethods: [air?'air':null, sea?'sea':null].filter(Boolean),
+      airNormalPrice, airSensitivePrice, seaNormalPrice, seaSensitivePrice,
+      contactName, contactPhone, contactAddress
+    });
+  }
+  
+  localStorage.setItem('lancmall_companies', JSON.stringify(companies));
+  renderCompanies();
+}
+
+function editCompany(id) {
+  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+  const company = companies.find(c => c.id === id);
+  if (company) showCompanyModal(company);
+}
+
+function deleteCompany(id) {
+  if (!confirm(t('delete_company_confirm'))) return;
+  let companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+  companies = companies.filter(c => c.id !== id);
+  localStorage.setItem('lancmall_companies', JSON.stringify(companies));
+  renderCompanies();
+}
+
+// 待确认品类
+function renderUnknownRanking() {
+  const records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
+  const unknownRecords = records.filter(r => r.category === 'unknown');
+  
+  const countMap = {};
+  unknownRecords.forEach(r => {
+    const name = r.productName.toLowerCase();
+    if (!countMap[name]) countMap[name] = { name: r.productName, count: 0 };
+    countMap[name].count++;
+  });
+  
+  const sorted = Object.values(countMap).sort((a, b) => b.count - a.count);
+  const tbody = document.getElementById('unknownBody');
+  
+  if (sorted.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-light);">暂无待确认品类</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = sorted.map((item, i) => `
+    <tr>
+      <td style="font-weight:700;color:var(--pink);">${i + 1}</td>
+      <td style="font-weight:600;">${item.name}</td>
+      <td><span class="badge unknown">${item.count}</span></td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="quickAdd('sensitive','${item.name.replace(/'/g,"\\'")}')">敏感货</button>
+        <button class="btn btn-outline btn-sm" onclick="quickAdd('normal','${item.name.replace(/'/g,"\\'")}')">普通货</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function quickAdd(type, name) {
+  const cats = loadCategories();
+  if (!cats[type]) cats[type] = [];
+  if (!cats[type].includes(name)) {
+    cats[type].push(name);
+    localStorage.setItem('lancmall_category_db', JSON.stringify(cats));
+    renderCategoryTags();
+    renderUnknownRanking();
+  }
+}
+
+// 子账号管理
+function renderAccounts() {
+  const accounts = JSON.parse(localStorage.getItem('lancmall_accounts') || '[]');
+  const tbody = document.getElementById('accountsBody');
+  
+  tbody.innerHTML = `
+    <tr>
+      <td style="font-weight:600;">admin</td>
+      <td><span class="badge normal">${t('admin_user')}</span></td>
+      <td>-</td>
+    </tr>
+    ${accounts.map(a => `
+      <tr>
+        <td style="font-weight:600;">${a.username}</td>
+        <td><span class="badge unknown">${t('sub_user')}</span></td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.username}')">${t('delete')}</button></td>
+      </tr>
+    `).join('')}
+  `;
+}
+
+function showAccountModal() {
+  const username = prompt(t('username_label') + ':');
+  if (!username) return;
+  const password = prompt(t('password_label') + ':');
+  if (!password) return;
+  
+  const accounts = JSON.parse(localStorage.getItem('lancmall_accounts') || '[]');
+  accounts.push({ username, password, role: 'sub' });
+  localStorage.setItem('lancmall_accounts', JSON.stringify(accounts));
+  renderAccounts();
+}
+
+function deleteAccount(username) {
+  if (!confirm(t('delete_account_confirm'))) return;
+  let accounts = JSON.parse(localStorage.getItem('lancmall_accounts') || '[]');
+  accounts = accounts.filter(a => a.username !== username);
+  localStorage.setItem('lancmall_accounts', JSON.stringify(accounts));
+  renderAccounts();
+}
+
+// ==================== 中英文切换 ====================
+
+function t(key) {
+  return translations[currentLang][key] || translations.zh[key] || key;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('lancmall_lang', lang);
+  document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+  event && event.target && event.target.classList.add('active');
+  applyTranslations();
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  // 重新渲染动态内容
+  initCategorySelects();
+  onMajorChange();
+  renderCartons();
+  loadAdminData();
+}
+
+// 初始化
+init();
+</script>
+</body>
+</html>
