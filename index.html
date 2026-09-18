@@ -494,6 +494,88 @@ tr:hover { background: rgba(255,107,157,0.03); }
   </div>
 </div>
 
+<!-- 物流公司编辑模态框 -->
+<div id="companyModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:16px;padding:28px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <h3 id="companyModalTitle" style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:20px;" data-i18n="add_new_company">添加新物流公司</h3>
+    <div class="form-group">
+      <label class="form-label" data-i18n="company_name">公司名称</label>
+      <input type="text" class="form-input" id="compName" placeholder="例如：DHL Express">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" data-i18n="air_transport">空运</label>
+        <input type="checkbox" id="compAir" onchange="toggleAirPriceFields()" style="width:auto;height:20px;">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="sea_transport">海运</label>
+        <input type="checkbox" id="compSea" onchange="toggleSeaPriceFields()" style="width:auto;height:20px;">
+      </div>
+    </div>
+    <div id="airPriceFields" style="display:none;">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" data-i18n="air_normal_price">空运普通货价格 (Rs/kg)</label>
+          <input type="number" class="form-input" id="compAirNormal" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="air_sensitive_price">空运敏感货价格 (Rs/kg)</label>
+          <input type="number" class="form-input" id="compAirSensitive" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div id="seaPriceFields" style="display:none;">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" data-i18n="sea_normal_price">海运普通货价格 (Rs/m³)</label>
+          <input type="number" class="form-input" id="compSeaNormal" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="sea_sensitive_price">海运敏感货价格 (Rs/m³)</label>
+          <input type="number" class="form-input" id="compSeaSensitive" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="contact_name">收货人姓名</label>
+      <input type="text" class="form-input" id="compContactName" placeholder="张三">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" data-i18n="contact_phone">收货人电话</label>
+        <input type="text" class="form-input" id="compContactPhone" placeholder="+86 138xxxx">
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="contact_address">收货地址</label>
+        <input type="text" class="form-input" id="compContactAddress" placeholder="广州市白云区...">
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button class="btn btn-outline" style="flex:1;" onclick="closeCompanyModal()" data-i18n="cancel">取消</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="saveCompany()" data-i18n="save">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 子账号编辑模态框 -->
+<div id="accountModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:16px;padding:28px;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <h3 style="font-size:18px;font-weight:700;color:var(--navy);margin-bottom:20px;" data-i18n="add_new_account">添加新子账号</h3>
+    <div class="form-group">
+      <label class="form-label" data-i18n="username_label">用户名（英文+数字）</label>
+      <input type="text" class="form-input" id="accUsername" placeholder="例如：zhangsan123">
+    </div>
+    <div class="form-group">
+      <label class="form-label" data-i18n="password_label">密码（英文+数字）</label>
+      <input type="password" class="form-input" id="accPassword" placeholder="请输入密码">
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button class="btn btn-outline" style="flex:1;" onclick="closeAccountModal()" data-i18n="cancel">取消</button>
+      <button class="btn btn-primary" style="flex:1;" onclick="saveAccount()" data-i18n="save">保存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ==================== 数据定义 ====================
 
@@ -502,145 +584,307 @@ const categoryData = {
   'clothing': {
     zh: '服装内衣', en: 'Clothing & Underwear',
     children: {
-      'mens': { zh: '男装', en: "Men's Wear", children: ['T恤','衬衫','夹克','牛仔裤','西装'] },
-      'womens': { zh: '女装', en: "Women's Wear", children: ['连衣裙','上衣','半身裙','牛仔裤','外套'] },
-      'underwear': { zh: '内衣', en: 'Underwear', children: ['文胸','内裤','保暖内衣','睡衣','袜子'] }
+      'mens': { zh: '男装', en: "Men's Wear", children: [
+        {zh:'T恤', en:'T-Shirt'}, {zh:'衬衫', en:'Shirt'}, {zh:'夹克', en:'Jacket'},
+        {zh:'牛仔裤', en:'Jeans'}, {zh:'西装', en:'Suit'}
+      ]},
+      'womens': { zh: '女装', en: "Women's Wear", children: [
+        {zh:'连衣裙', en:'Dress'}, {zh:'上衣', en:'Top'}, {zh:'半身裙', en:'Skirt'},
+        {zh:'牛仔裤', en:'Jeans'}, {zh:'外套', en:'Coat'}
+      ]},
+      'underwear': { zh: '内衣', en: 'Underwear', children: [
+        {zh:'文胸', en:'Bra'}, {zh:'内裤', en:'Underwear'}, {zh:'保暖内衣', en:'Thermal Underwear'},
+        {zh:'睡衣', en:'Pajamas'}, {zh:'袜子', en:'Socks'}
+      ]}
     }
   },
   'shoes_bags': {
     zh: '时尚鞋包', en: 'Shoes & Bags',
     children: {
-      'mens_shoes': { zh: '男鞋', en: "Men's Shoes", children: ['运动鞋','皮鞋','休闲鞋','凉鞋','靴子'] },
-      'womens_shoes': { zh: '女鞋', en: "Women's Shoes", children: ['高跟鞋','平底鞋','运动鞋','凉鞋','靴子'] },
-      'bags': { zh: '箱包', en: 'Bags', children: ['双肩包','单肩包','手提包','钱包','行李箱'] }
+      'mens_shoes': { zh: '男鞋', en: "Men's Shoes", children: [
+        {zh:'运动鞋', en:'Sneakers'}, {zh:'皮鞋', en:'Leather Shoes'}, {zh:'休闲鞋', en:'Casual Shoes'},
+        {zh:'凉鞋', en:'Sandals'}, {zh:'靴子', en:'Boots'}
+      ]},
+      'womens_shoes': { zh: '女鞋', en: "Women's Shoes", children: [
+        {zh:'高跟鞋', en:'High Heels'}, {zh:'平底鞋', en:'Flats'}, {zh:'运动鞋', en:'Sneakers'},
+        {zh:'凉鞋', en:'Sandals'}, {zh:'靴子', en:'Boots'}
+      ]},
+      'bags': { zh: '箱包', en: 'Bags', children: [
+        {zh:'双肩包', en:'Backpack'}, {zh:'单肩包', en:'Shoulder Bag'}, {zh:'手提包', en:'Handbag'},
+        {zh:'钱包', en:'Wallet'}, {zh:'行李箱', en:'Suitcase'}
+      ]}
     }
   },
   'jewelry_watches': {
     zh: '珠宝手表', en: 'Jewelry & Watches',
     children: {
-      'jewelry': { zh: '珠宝首饰', en: 'Jewelry', children: ['项链','手链','戒指','耳环','吊坠'] },
-      'watches': { zh: '手表', en: 'Watches', children: ['机械表','石英表','电子表','智能手表'] }
+      'jewelry': { zh: '珠宝首饰', en: 'Jewelry', children: [
+        {zh:'项链', en:'Necklace'}, {zh:'手链', en:'Bracelet'}, {zh:'戒指', en:'Ring'},
+        {zh:'耳环', en:'Earrings'}, {zh:'吊坠', en:'Pendant'}
+      ]},
+      'watches': { zh: '手表', en: 'Watches', children: [
+        {zh:'机械表', en:'Mechanical Watch'}, {zh:'石英表', en:'Quartz Watch'},
+        {zh:'电子表', en:'Digital Watch'}, {zh:'智能手表', en:'Smart Watch'}
+      ]}
     }
   },
   'sports': {
     zh: '运动服装和器材', en: 'Sports & Fitness',
     children: {
-      'sportswear': { zh: '运动服装', en: 'Sportswear', children: ['运动T恤','运动裤','运动外套','瑜伽服','泳衣'] },
-      'fitness': { zh: '健身器材', en: 'Fitness Equipment', children: ['哑铃','瑜伽垫','跳绳','拉力器','健腹轮'] },
-      'balls': { zh: '球类运动', en: 'Ball Sports', children: ['篮球','足球','羽毛球拍','乒乓球拍','网球拍'] }
+      'sportswear': { zh: '运动服装', en: 'Sportswear', children: [
+        {zh:'运动T恤', en:'Sports T-Shirt'}, {zh:'运动裤', en:'Sweatpants'}, {zh:'运动外套', en:'Sports Jacket'},
+        {zh:'瑜伽服', en:'Yoga Wear'}, {zh:'泳衣', en:'Swimsuit'}
+      ]},
+      'fitness': { zh: '健身器材', en: 'Fitness Equipment', children: [
+        {zh:'哑铃', en:'Dumbbells'}, {zh:'瑜伽垫', en:'Yoga Mat'}, {zh:'跳绳', en:'Jump Rope'},
+        {zh:'拉力器', en:'Resistance Band'}, {zh:'健腹轮', en:'Ab Roller'}
+      ]},
+      'balls': { zh: '球类运动', en: 'Ball Sports', children: [
+        {zh:'篮球', en:'Basketball'}, {zh:'足球', en:'Football'}, {zh:'羽毛球拍', en:'Badminton Racket'},
+        {zh:'乒乓球拍', en:'Ping Pong Paddle'}, {zh:'网球拍', en:'Tennis Racket'}
+      ]}
     }
   },
   'kids_toys': {
     zh: '童装玩具', en: "Kids & Toys",
     children: {
-      'plush': { zh: '毛绒玩具', en: 'Plush Toys', children: ['泰迪熊','玩偶','抱枕','公仔','布娃娃'] },
-      'educational': { zh: '益智玩具', en: 'Educational Toys', children: ['积木','拼图','魔方','早教机','画板'] },
-      'rc': { zh: '遥控玩具', en: 'RC Toys', children: ['遥控车','遥控飞机','遥控船','遥控机器人'] }
+      'plush': { zh: '毛绒玩具', en: 'Plush Toys', children: [
+        {zh:'泰迪熊', en:'Teddy Bear'}, {zh:'玩偶', en:'Doll'}, {zh:'抱枕', en:'Pillow'},
+        {zh:'公仔', en:'Plush Figure'}, {zh:'布娃娃', en:'Rag Doll'}
+      ]},
+      'educational': { zh: '益智玩具', en: 'Educational Toys', children: [
+        {zh:'积木', en:'Building Blocks'}, {zh:'拼图', en:'Puzzle'}, {zh:'魔方', en:'Rubik\'s Cube'},
+        {zh:'早教机', en:'Learning Machine'}, {zh:'画板', en:'Drawing Board'}
+      ]},
+      'rc': { zh: '遥控玩具', en: 'RC Toys', children: [
+        {zh:'遥控车', en:'RC Car'}, {zh:'遥控飞机', en:'RC Plane'},
+        {zh:'遥控船', en:'RC Boat'}, {zh:'遥控机器人', en:'RC Robot'}
+      ]}
     }
   },
   'home_daily': {
     zh: '家居日用', en: 'Home & Daily',
     children: {
-      'kitchen': { zh: '厨房用品', en: 'Kitchen', children: ['锅具','刀具','餐具','保温杯','保鲜盒'] },
-      'storage': { zh: '收纳整理', en: 'Storage', children: ['收纳箱','收纳盒','衣架','置物架','真空压缩袋'] },
-      'cleaning': { zh: '清洁用品', en: 'Cleaning', children: ['拖把','扫帚','垃圾桶','清洁剂','抹布'] },
-      'bedding': { zh: '床上用品', en: 'Bedding', children: ['四件套','被子','枕头','床垫','蚊帐'] }
+      'kitchen': { zh: '厨房用品', en: 'Kitchen', children: [
+        {zh:'锅具', en:'Cookware'}, {zh:'刀具', en:'Kitchen Knives'}, {zh:'餐具', en:'Tableware'},
+        {zh:'保温杯', en:'Thermos Cup'}, {zh:'保鲜盒', en:'Food Storage Box'}
+      ]},
+      'storage': { zh: '收纳整理', en: 'Storage', children: [
+        {zh:'收纳箱', en:'Storage Box'}, {zh:'收纳盒', en:'Storage Bin'}, {zh:'衣架', en:'Hangers'},
+        {zh:'置物架', en:'Shelf'}, {zh:'真空压缩袋', en:'Vacuum Bag'}
+      ]},
+      'cleaning': { zh: '清洁用品', en: 'Cleaning', children: [
+        {zh:'拖把', en:'Mop'}, {zh:'扫帚', en:'Broom'}, {zh:'垃圾桶', en:'Trash Can'},
+        {zh:'清洁剂', en:'Cleaner'}, {zh:'抹布', en:'Rag'}
+      ]},
+      'bedding': { zh: '床上用品', en: 'Bedding', children: [
+        {zh:'四件套', en:'4-Piece Bedding Set'}, {zh:'被子', en:'Quilt'}, {zh:'枕头', en:'Pillow'},
+        {zh:'床垫', en:'Mattress'}, {zh:'蚊帐', en:'Mosquito Net'}
+      ]}
     }
   },
   'beauty': {
     zh: '美妆日化', en: 'Beauty & Personal Care',
     children: {
-      'skincare': { zh: '护肤', en: 'Skincare', children: ['面霜','精华','洗面奶','爽肤水','面膜'] },
-      'makeup': { zh: '彩妆', en: 'Makeup', children: ['口红','粉底','眼影','睫毛膏','卸妆水'] },
-      'fragrance': { zh: '香水', en: 'Fragrance', children: ['女士香水','男士香水','中性香水'] },
-      'personal': { zh: '个人护理', en: 'Personal Care', children: ['洗发水','沐浴露','牙膏','牙刷','剃须刀'] }
+      'skincare': { zh: '护肤', en: 'Skincare', children: [
+        {zh:'面霜', en:'Face Cream'}, {zh:'精华', en:'Serum'}, {zh:'洗面奶', en:'Facial Cleanser'},
+        {zh:'爽肤水', en:'Toner'}, {zh:'面膜', en:'Face Mask'}
+      ]},
+      'makeup': { zh: '彩妆', en: 'Makeup', children: [
+        {zh:'口红', en:'Lipstick'}, {zh:'粉底', en:'Foundation'}, {zh:'眼影', en:'Eyeshadow'},
+        {zh:'睫毛膏', en:'Mascara'}, {zh:'卸妆水', en:'Makeup Remover'}
+      ]},
+      'fragrance': { zh: '香水', en: 'Fragrance', children: [
+        {zh:'女士香水', en:"Women's Perfume"}, {zh:'男士香水', en:"Men's Cologne"},
+        {zh:'中性香水', en:'Unisex Perfume'}
+      ]},
+      'personal': { zh: '个人护理', en: 'Personal Care', children: [
+        {zh:'洗发水', en:'Shampoo'}, {zh:'沐浴露', en:'Body Wash'}, {zh:'牙膏', en:'Toothpaste'},
+        {zh:'牙刷', en:'Toothbrush'}, {zh:'剃须刀', en:'Razor'}
+      ]}
     }
   },
   'pet_garden': {
     zh: '宠物园艺用品', en: 'Pet & Garden',
     children: {
-      'pet': { zh: '宠物用品', en: 'Pet Supplies', children: ['宠物粮','宠物玩具','宠物窝','宠物衣服','牵引绳'] },
-      'garden': { zh: '园艺用品', en: 'Garden Supplies', children: ['花盆','花土','肥料','剪刀','喷壶'] }
+      'pet': { zh: '宠物用品', en: 'Pet Supplies', children: [
+        {zh:'宠物粮', en:'Pet Food'}, {zh:'宠物玩具', en:'Pet Toy'}, {zh:'宠物窝', en:'Pet Bed'},
+        {zh:'宠物衣服', en:'Pet Clothes'}, {zh:'牵引绳', en:'Leash'}
+      ]},
+      'garden': { zh: '园艺用品', en: 'Garden Supplies', children: [
+        {zh:'花盆', en:'Flower Pot'}, {zh:'花土', en:'Potting Soil'}, {zh:'肥料', en:'Fertilizer'},
+        {zh:'剪刀', en:'Garden Shears'}, {zh:'喷壶', en:'Watering Can'}
+      ]}
     }
   },
   'digital_auto': {
     zh: '数码电子/汽车配件', en: 'Digital & Auto Parts',
     children: {
-      'phone': { zh: '手机配件', en: 'Phone Accessories', children: ['手机壳','充电器','数据线','耳机','手机膜'] },
-      'computer': { zh: '电脑配件', en: 'Computer Accessories', children: ['鼠标','键盘','U盘','移动硬盘','散热器'] },
-      'auto': { zh: '汽车配件', en: 'Auto Accessories', children: ['车载充电器','行车记录仪','汽车香水','坐垫','方向盘套'] }
+      'phone': { zh: '手机配件', en: 'Phone Accessories', children: [
+        {zh:'手机壳', en:'Phone Case'}, {zh:'充电器', en:'Charger'}, {zh:'数据线', en:'Data Cable'},
+        {zh:'耳机', en:'Earphones'}, {zh:'手机膜', en:'Screen Protector'}
+      ]},
+      'computer': { zh: '电脑配件', en: 'Computer Accessories', children: [
+        {zh:'鼠标', en:'Mouse'}, {zh:'键盘', en:'Keyboard'}, {zh:'U盘', en:'USB Flash Drive'},
+        {zh:'移动硬盘', en:'External Hard Drive'}, {zh:'散热器', en:'Cooler'}
+      ]},
+      'auto': { zh: '汽车配件', en: 'Auto Accessories', children: [
+        {zh:'车载充电器', en:'Car Charger'}, {zh:'行车记录仪', en:'Dash Cam'}, {zh:'汽车香水', en:'Car Air Freshener'},
+        {zh:'坐垫', en:'Seat Cushion'}, {zh:'方向盘套', en:'Steering Wheel Cover'}
+      ]}
     }
   },
   'food_beverage': {
     zh: '食品饮料', en: 'Food & Beverage',
     children: {
-      'snacks': { zh: '休闲零食', en: 'Snacks', children: ['坚果','饼干','糖果','肉干','膨化食品'] },
-      'drinks': { zh: '饮料', en: 'Beverages', children: ['茶叶','咖啡','果汁','奶粉','蜂蜜'] },
-      'seasoning': { zh: '调味品', en: 'Seasonings', children: ['酱油','醋','辣椒酱','火锅底料','鸡精'] }
+      'snacks': { zh: '休闲零食', en: 'Snacks', children: [
+        {zh:'坚果', en:'Nuts'}, {zh:'饼干', en:'Biscuits'}, {zh:'糖果', en:'Candy'},
+        {zh:'肉干', en:'Jerky'}, {zh:'膨化食品', en:'Puffed Food'}
+      ]},
+      'drinks': { zh: '饮料', en: 'Beverages', children: [
+        {zh:'茶叶', en:'Tea'}, {zh:'咖啡', en:'Coffee'}, {zh:'果汁', en:'Juice'},
+        {zh:'奶粉', en:'Milk Powder'}, {zh:'蜂蜜', en:'Honey'}
+      ]},
+      'seasoning': { zh: '调味品', en: 'Seasonings', children: [
+        {zh:'酱油', en:'Soy Sauce'}, {zh:'醋', en:'Vinegar'}, {zh:'辣椒酱', en:'Chili Sauce'},
+        {zh:'火锅底料', en:'Hot Pot Base'}, {zh:'鸡精', en:'Chicken Essence'}
+      ]}
     }
   },
   'hardware_tools': {
     zh: '五金工具', en: 'Hardware & Tools',
     children: {
-      'hand': { zh: '手动工具', en: 'Hand Tools', children: ['扳手','螺丝刀','钳子','锤子','卷尺'] },
-      'power': { zh: '电动工具', en: 'Power Tools', children: ['电钻','角磨机','电锯','电磨','热风枪'] },
-      'fasteners': { zh: '紧固件', en: 'Fasteners', children: ['螺丝','螺母','螺栓','膨胀螺丝','铆钉'] }
+      'hand': { zh: '手动工具', en: 'Hand Tools', children: [
+        {zh:'扳手', en:'Wrench'}, {zh:'螺丝刀', en:'Screwdriver'}, {zh:'钳子', en:'Pliers'},
+        {zh:'锤子', en:'Hammer'}, {zh:'卷尺', en:'Tape Measure'}
+      ]},
+      'power': { zh: '电动工具', en: 'Power Tools', children: [
+        {zh:'电钻', en:'Electric Drill'}, {zh:'角磨机', en:'Angle Grinder'}, {zh:'电锯', en:'Electric Saw'},
+        {zh:'电磨', en:'Electric Grinder'}, {zh:'热风枪', en:'Heat Gun'}
+      ]},
+      'fasteners': { zh: '紧固件', en: 'Fasteners', children: [
+        {zh:'螺丝', en:'Screw'}, {zh:'螺母', en:'Nut'}, {zh:'螺栓', en:'Bolt'},
+        {zh:'膨胀螺丝', en:'Expansion Bolt'}, {zh:'铆钉', en:'Rivet'}
+      ]}
     }
   },
   'office_stationery': {
     zh: '办公文教', en: 'Office & Stationery',
     children: {
-      'stationery': { zh: '文具', en: 'Stationery', children: ['笔','笔记本','文件夹','订书机','计算器'] },
-      'equipment': { zh: '办公设备', en: 'Office Equipment', children: ['打印机','扫描仪','碎纸机','考勤机','投影仪'] },
-      'student': { zh: '学生用品', en: 'Student Supplies', children: ['书包','文具盒','橡皮','尺子','圆规'] }
+      'stationery': { zh: '文具', en: 'Stationery', children: [
+        {zh:'笔', en:'Pen'}, {zh:'笔记本', en:'Notebook'}, {zh:'文件夹', en:'Folder'},
+        {zh:'订书机', en:'Stapler'}, {zh:'计算器', en:'Calculator'}
+      ]},
+      'equipment': { zh: '办公设备', en: 'Office Equipment', children: [
+        {zh:'打印机', en:'Printer'}, {zh:'扫描仪', en:'Scanner'}, {zh:'碎纸机', en:'Paper Shredder'},
+        {zh:'考勤机', en:'Attendance Machine'}, {zh:'投影仪', en:'Projector'}
+      ]},
+      'student': { zh: '学生用品', en: 'Student Supplies', children: [
+        {zh:'书包', en:'School Bag'}, {zh:'文具盒', en:'Pencil Case'}, {zh:'橡皮', en:'Eraser'},
+        {zh:'尺子', en:'Ruler'}, {zh:'圆规', en:'Compass'}
+      ]}
     }
   },
   'electrical_lighting': {
     zh: '电工电气/照明', en: 'Electrical & Lighting',
     children: {
-      'lights': { zh: '灯具', en: 'Lighting', children: ['吸顶灯','吊灯','台灯','手电筒','LED灯带'] },
-      'electrical': { zh: '电气配件', en: 'Electrical', children: ['开关','插座','电线','插头','断路器'] },
-      'batteries': { zh: '电池', en: 'Batteries', children: ['干电池','充电电池','纽扣电池','蓄电池'] }
+      'lights': { zh: '灯具', en: 'Lighting', children: [
+        {zh:'吸顶灯', en:'Ceiling Light'}, {zh:'吊灯', en:'Chandelier'}, {zh:'台灯', en:'Desk Lamp'},
+        {zh:'手电筒', en:'Flashlight'}, {zh:'LED灯带', en:'LED Strip Light'}
+      ]},
+      'electrical': { zh: '电气配件', en: 'Electrical', children: [
+        {zh:'开关', en:'Switch'}, {zh:'插座', en:'Socket'}, {zh:'电线', en:'Wire'},
+        {zh:'插头', en:'Plug'}, {zh:'断路器', en:'Circuit Breaker'}
+      ]},
+      'batteries': { zh: '电池', en: 'Batteries', children: [
+        {zh:'干电池', en:'Dry Battery'}, {zh:'充电电池', en:'Rechargeable Battery'},
+        {zh:'纽扣电池', en:'Button Battery'}, {zh:'蓄电池', en:'Storage Battery'}
+      ]}
     }
   },
   'home_improvement': {
     zh: '家装建材', en: 'Home Improvement',
     children: {
-      'bathroom': { zh: '卫浴', en: 'Bathroom', children: ['水龙头','花洒','马桶','浴室柜','地漏'] },
-      'doors_windows': { zh: '门窗', en: 'Doors & Windows', children: ['门锁','合页','门把手','窗帘杆','纱窗'] },
-      'paint': { zh: '涂料', en: 'Paint', children: ['乳胶漆','防水涂料','瓷砖胶','腻子粉','美缝剂'] }
+      'bathroom': { zh: '卫浴', en: 'Bathroom', children: [
+        {zh:'水龙头', en:'Faucet'}, {zh:'花洒', en:'Shower Head'}, {zh:'马桶', en:'Toilet'},
+        {zh:'浴室柜', en:'Bathroom Cabinet'}, {zh:'地漏', en:'Floor Drain'}
+      ]},
+      'doors_windows': { zh: '门窗', en: 'Doors & Windows', children: [
+        {zh:'门锁', en:'Door Lock'}, {zh:'合页', en:'Hinge'}, {zh:'门把手', en:'Door Handle'},
+        {zh:'窗帘杆', en:'Curtain Rod'}, {zh:'纱窗', en:'Window Screen'}
+      ]},
+      'paint': { zh: '涂料', en: 'Paint', children: [
+        {zh:'乳胶漆', en:'Latex Paint'}, {zh:'防水涂料', en:'Waterproof Coating'}, {zh:'瓷砖胶', en:'Tile Adhesive'},
+        {zh:'腻子粉', en:'Putty Powder'}, {zh:'美缝剂', en:'Grout Sealer'}
+      ]}
     }
   },
   'home_textile': {
     zh: '家纺家饰', en: 'Home Textile & Decor',
     children: {
-      'curtains': { zh: '窗帘', en: 'Curtains', children: ['遮光窗帘','纱帘','百叶窗','卷帘'] },
-      'rugs': { zh: '地毯', en: 'Rugs', children: ['客厅地毯','卧室地毯','地垫','门垫'] },
-      'decor': { zh: '装饰画', en: 'Decor', children: ['挂画','壁画','照片墙','摆件','花瓶'] }
+      'curtains': { zh: '窗帘', en: 'Curtains', children: [
+        {zh:'遮光窗帘', en:'Blackout Curtain'}, {zh:'纱帘', en:'Sheer Curtain'},
+        {zh:'百叶窗', en:'Blinds'}, {zh:'卷帘', en:'Roller Blind'}
+      ]},
+      'rugs': { zh: '地毯', en: 'Rugs', children: [
+        {zh:'客厅地毯', en:'Living Room Rug'}, {zh:'卧室地毯', en:'Bedroom Rug'},
+        {zh:'地垫', en:'Floor Mat'}, {zh:'门垫', en:'Door Mat'}
+      ]},
+      'decor': { zh: '装饰画', en: 'Decor', children: [
+        {zh:'挂画', en:'Wall Art'}, {zh:'壁画', en:'Mural'}, {zh:'照片墙', en:'Photo Wall'},
+        {zh:'摆件', en:'Ornament'}, {zh:'花瓶', en:'Vase'}
+      ]}
     }
   },
   'gifts_crafts': {
     zh: '礼品工艺品', en: 'Gifts & Crafts',
     children: {
-      'festival': { zh: '节日礼品', en: 'Festival Gifts', children: ['圣诞礼品','新年礼品','情人节礼品','生日礼品'] },
-      'crafts': { zh: '工艺品', en: 'Crafts', children: ['陶瓷','木雕','水晶','琉璃','树脂摆件'] },
-      'flowers': { zh: '鲜花绿植', en: 'Flowers & Plants', children: ['仿真花','干花','绿植盆栽','多肉','花瓶'] }
+      'festival': { zh: '节日礼品', en: 'Festival Gifts', children: [
+        {zh:'圣诞礼品', en:'Christmas Gift'}, {zh:'新年礼品', en:'New Year Gift'},
+        {zh:'情人节礼品', en:"Valentine's Day Gift"}, {zh:'生日礼品', en:'Birthday Gift'}
+      ]},
+      'crafts': { zh: '工艺品', en: 'Crafts', children: [
+        {zh:'陶瓷', en:'Ceramics'}, {zh:'木雕', en:'Wood Carving'}, {zh:'水晶', en:'Crystal'},
+        {zh:'琉璃', en:'Colored Glaze'}, {zh:'树脂摆件', en:'Resin Ornament'}
+      ]},
+      'flowers': { zh: '鲜花绿植', en: 'Flowers & Plants', children: [
+        {zh:'仿真花', en:'Artificial Flower'}, {zh:'干花', en:'Dried Flower'},
+        {zh:'绿植盆栽', en:'Potted Plant'}, {zh:'多肉', en:'Succulent'}, {zh:'花瓶', en:'Vase'}
+      ]}
     }
   },
   'medical_health': {
     zh: '医药保健', en: 'Medicine & Health Care',
     children: {
-      'supplements': { zh: '保健品', en: 'Supplements', children: ['维生素','蛋白粉','鱼油','钙片','益生菌'] },
-      'devices': { zh: '医疗器械', en: 'Medical Devices', children: ['体温计','血压计','血糖仪','口罩','创可贴'] },
-      'tcm': { zh: '中药', en: 'TCM', children: ['枸杞','红枣','黄芪','当归','人参'] }
+      'supplements': { zh: '保健品', en: 'Supplements', children: [
+        {zh:'维生素', en:'Vitamin'}, {zh:'蛋白粉', en:'Protein Powder'}, {zh:'鱼油', en:'Fish Oil'},
+        {zh:'钙片', en:'Calcium Tablet'}, {zh:'益生菌', en:'Probiotics'}
+      ]},
+      'devices': { zh: '医疗器械', en: 'Medical Devices', children: [
+        {zh:'体温计', en:'Thermometer'}, {zh:'血压计', en:'Blood Pressure Monitor'},
+        {zh:'血糖仪', en:'Blood Glucose Meter'}, {zh:'口罩', en:'Mask'}, {zh:'创可贴', en:'Band-Aid'}
+      ]},
+      'tcm': { zh: '中药', en: 'TCM', children: [
+        {zh:'枸杞', en:'Goji Berry'}, {zh:'红枣', en:'Red Date'}, {zh:'黄芪', en:'Astragalus'},
+        {zh:'当归', en:'Angelica Root'}, {zh:'人参', en:'Ginseng'}
+      ]}
     }
   },
   'new_energy': {
     zh: '新能源', en: 'New Energy',
     children: {
-      'solar': { zh: '太阳能', en: 'Solar', children: ['太阳能板','太阳能灯','太阳能充电器','太阳能充电宝'] },
-      'storage': { zh: '储能', en: 'Energy Storage', children: ['锂电池','磷酸铁锂电池','移动电源','储能电源'] },
-      'ev': { zh: '电动车配件', en: 'EV Parts', children: ['电动车充电器','电动车电池','电动车控制器','电动车灯'] }
+      'solar': { zh: '太阳能', en: 'Solar', children: [
+        {zh:'太阳能板', en:'Solar Panel'}, {zh:'太阳能灯', en:'Solar Light'},
+        {zh:'太阳能充电器', en:'Solar Charger'}, {zh:'太阳能充电宝', en:'Solar Power Bank'}
+      ]},
+      'storage': { zh: '储能', en: 'Energy Storage', children: [
+        {zh:'锂电池', en:'Lithium Battery'}, {zh:'磷酸铁锂电池', en:'LFP Battery'},
+        {zh:'移动电源', en:'Power Bank'}, {zh:'储能电源', en:'Energy Storage Power'}
+      ]},
+      'ev': { zh: '电动车配件', en: 'EV Parts', children: [
+        {zh:'电动车充电器', en:'EV Charger'}, {zh:'电动车电池', en:'EV Battery'},
+        {zh:'电动车控制器', en:'EV Controller'}, {zh:'电动车灯', en:'EV Light'}
+      ]}
     }
   }
 };
@@ -849,7 +1093,6 @@ function init() {
   initCategorySelects();
   initCartons();
   setLang(currentLang);
-  checkAdminLogin();
 }
 
 // 初始化品类下拉
@@ -919,10 +1162,10 @@ function onSubChange() {
   }
 
   const children = categoryData[major].children[sub].children;
-  children.forEach(item => {
+  children.forEach((item, index) => {
     const opt = document.createElement('option');
-    opt.value = item;
-    opt.textContent = item;
+    opt.value = index;
+    opt.textContent = item[currentLang] || item.zh;
     specSelect.appendChild(opt);
   });
   const otherOpt = document.createElement('option');
@@ -1038,19 +1281,23 @@ function checkPropertiesComplete() {
 
 // ==================== 品类判断 ====================
 
-function getProductName() {
+function getProductName(lang = currentLang) {
   if (queryState.majorCategory === '__other__' || queryState.specificProduct === '__other__') {
     return document.getElementById('customProduct').value || '未知产品';
   }
   const parts = [];
   if (queryState.majorCategory && categoryData[queryState.majorCategory]) {
-    parts.push(categoryData[queryState.majorCategory][currentLang]);
+    parts.push(categoryData[queryState.majorCategory][lang]);
   }
   if (queryState.subCategory && categoryData[queryState.majorCategory]?.children[queryState.subCategory]) {
-    parts.push(categoryData[queryState.majorCategory].children[queryState.subCategory][currentLang]);
+    parts.push(categoryData[queryState.majorCategory].children[queryState.subCategory][lang]);
   }
-  if (queryState.specificProduct && queryState.specificProduct !== '__other__') {
-    parts.push(queryState.specificProduct);
+  if (queryState.specificProduct && queryState.specificProduct !== '__other__' && !isNaN(parseInt(queryState.specificProduct))) {
+    const idx = parseInt(queryState.specificProduct);
+    const item = categoryData[queryState.majorCategory]?.children[queryState.subCategory]?.children?.[idx];
+    if (item) {
+      parts.push(item[lang] || item.zh);
+    }
   }
   return parts.join(' / ') || '未知产品';
 }
@@ -1063,7 +1310,7 @@ function loadCategories() {
 
 function detectCategory() {
   const cats = loadCategories();
-  const productName = getProductName().toLowerCase();
+  const productName = getProductName('zh').toLowerCase();
   
   // 1. 禁运品
   if (cats.banned.some(kw => productName.includes(kw.toLowerCase()))) {
@@ -1540,44 +1787,75 @@ function renderCompanies() {
   `).join('');
 }
 
+let editingCompanyId = null;
+
 function showCompanyModal(company = null) {
-  // 简单的prompt对话框（实际项目中应该用模态框）
-  const name = company ? company.name : prompt(t('company_name_label') + ':');
-  if (!name) return;
+  editingCompanyId = company ? company.id : null;
+  document.getElementById('companyModalTitle').textContent = company ? t('edit_company') : t('add_new_company');
   
-  const air = confirm(t('air_transport') + '?') ? true : false;
-  const sea = confirm(t('sea_transport') + '?') ? true : false;
+  // 填充表单
+  document.getElementById('compName').value = company ? company.name : '';
+  document.getElementById('compAir').checked = company ? company.shippingMethods.includes('air') : false;
+  document.getElementById('compSea').checked = company ? company.shippingMethods.includes('sea') : false;
+  document.getElementById('compAirNormal').value = company ? company.airNormalPrice : '';
+  document.getElementById('compAirSensitive').value = company ? company.airSensitivePrice : '';
+  document.getElementById('compSeaNormal').value = company ? company.seaNormalPrice : '';
+  document.getElementById('compSeaSensitive').value = company ? company.seaSensitivePrice : '';
+  document.getElementById('compContactName').value = company ? company.contactName : '';
+  document.getElementById('compContactPhone').value = company ? company.contactPhone : '';
+  document.getElementById('compContactAddress').value = company ? company.contactAddress : '';
   
-  let airNormalPrice = '', airSensitivePrice = '', seaNormalPrice = '', seaSensitivePrice = '';
-  if (air) {
-    airNormalPrice = prompt(t('air_normal_price') + ':') || '0';
-    airSensitivePrice = prompt(t('air_sensitive_price') + ':') || '0';
-  }
-  if (sea) {
-    seaNormalPrice = prompt(t('sea_normal_price') + ':') || '0';
-    seaSensitivePrice = prompt(t('sea_sensitive_price') + ':') || '0';
-  }
+  toggleAirPriceFields();
+  toggleSeaPriceFields();
   
-  const contactName = prompt(t('contact_name') + ':') || '';
-  const contactPhone = prompt(t('contact_phone') + ':') || '';
-  const contactAddress = prompt(t('contact_address') + ':') || '';
+  document.getElementById('companyModal').style.display = 'flex';
+}
+
+function toggleAirPriceFields() {
+  const checked = document.getElementById('compAir').checked;
+  document.getElementById('airPriceFields').style.display = checked ? 'block' : 'none';
+}
+
+function toggleSeaPriceFields() {
+  const checked = document.getElementById('compSea').checked;
+  document.getElementById('seaPriceFields').style.display = checked ? 'block' : 'none';
+}
+
+function closeCompanyModal() {
+  document.getElementById('companyModal').style.display = 'none';
+  editingCompanyId = null;
+}
+
+function saveCompany() {
+  const name = document.getElementById('compName').value.trim();
+  if (!name) { alert(t('company_name_label') + ' required'); return; }
+  
+  const air = document.getElementById('compAir').checked;
+  const sea = document.getElementById('compSea').checked;
+  
+  const companyData = {
+    name,
+    shippingMethods: [air ? 'air' : null, sea ? 'sea' : null].filter(Boolean),
+    airNormalPrice: document.getElementById('compAirNormal').value || '0',
+    airSensitivePrice: document.getElementById('compAirSensitive').value || '0',
+    seaNormalPrice: document.getElementById('compSeaNormal').value || '0',
+    seaSensitivePrice: document.getElementById('compSeaSensitive').value || '0',
+    contactName: document.getElementById('compContactName').value,
+    contactPhone: document.getElementById('compContactPhone').value,
+    contactAddress: document.getElementById('compContactAddress').value
+  };
   
   const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
   
-  if (company) {
-    const idx = companies.findIndex(c => c.id === company.id);
-    companies[idx] = { ...companies[idx], name, shippingMethods: [air?'air':null, sea?'sea':null].filter(Boolean), airNormalPrice, airSensitivePrice, seaNormalPrice, seaSensitivePrice, contactName, contactPhone, contactAddress };
+  if (editingCompanyId) {
+    const idx = companies.findIndex(c => c.id === editingCompanyId);
+    companies[idx] = { ...companies[idx], ...companyData };
   } else {
-    companies.push({
-      id: Date.now(),
-      name,
-      shippingMethods: [air?'air':null, sea?'sea':null].filter(Boolean),
-      airNormalPrice, airSensitivePrice, seaNormalPrice, seaSensitivePrice,
-      contactName, contactPhone, contactAddress
-    });
+    companies.push({ id: Date.now(), ...companyData });
   }
   
   localStorage.setItem('lancmall_companies', JSON.stringify(companies));
+  closeCompanyModal();
   renderCompanies();
 }
 
@@ -1661,14 +1939,28 @@ function renderAccounts() {
 }
 
 function showAccountModal() {
-  const username = prompt(t('username_label') + ':');
-  if (!username) return;
-  const password = prompt(t('password_label') + ':');
-  if (!password) return;
+  document.getElementById('accUsername').value = '';
+  document.getElementById('accPassword').value = '';
+  document.getElementById('accountModal').style.display = 'flex';
+}
+
+function closeAccountModal() {
+  document.getElementById('accountModal').style.display = 'none';
+}
+
+function saveAccount() {
+  const username = document.getElementById('accUsername').value.trim();
+  const password = document.getElementById('accPassword').value.trim();
+  
+  if (!username || !password) {
+    alert(t('username_label') + ' & ' + t('password_label') + ' required');
+    return;
+  }
   
   const accounts = JSON.parse(localStorage.getItem('lancmall_accounts') || '[]');
   accounts.push({ username, password, role: 'sub' });
   localStorage.setItem('lancmall_accounts', JSON.stringify(accounts));
+  closeAccountModal();
   renderAccounts();
 }
 
@@ -1699,9 +1991,24 @@ function applyTranslations() {
     const key = el.getAttribute('data-i18n');
     el.textContent = t(key);
   });
+  // 保存当前选中值
+  const savedMajor = document.getElementById('majorCategory').value;
+  const savedSub = document.getElementById('subCategory').value;
+  const savedSpecific = document.getElementById('specificProduct').value;
+  
   // 重新渲染动态内容
   initCategorySelects();
-  onMajorChange();
+  if (savedMajor) {
+    document.getElementById('majorCategory').value = savedMajor;
+    onMajorChange();
+    if (savedSub) {
+      document.getElementById('subCategory').value = savedSub;
+      onSubChange();
+      if (savedSpecific) {
+        document.getElementById('specificProduct').value = savedSpecific;
+      }
+    }
+  }
   renderCartons();
   loadAdminData();
 }
