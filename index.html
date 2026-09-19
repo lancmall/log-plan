@@ -6,6 +6,7 @@
 <title>Lancmall 物流品类自查工具 | Logistics Category Checker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --navy: #0a1628; --pink: #FF6B9D; --yellow: #FFD93D;
@@ -1068,6 +1069,11 @@ const translations = {
 
 // ==================== 状态管理 ====================
 
+// ==================== Supabase 初始化 ====================
+const SUPABASE_URL = 'https://cgsdojclymheqfpxlklu.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_Ox7fOMiHrhMzlw1QFyHyFQ_eS60XW3j';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let currentLang = localStorage.getItem('lancmall_lang') || 'zh';
 let queryState = {
   majorCategory: '',
@@ -1380,13 +1386,21 @@ function selectShipping(method) {
   updatePriceDisplay();
 }
 
-function loadCompanies() {
-  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+async function loadCompanies() {
+  const { data: companies, error } = await supabase
+    .from('log_companies')
+    .select('*');
+  
+  if (error) {
+    console.error('Error loading companies:', error);
+    return;
+  }
+  
   const select = document.getElementById('logisticsCompany');
   select.innerHTML = `<option value="">${t('select_company')}</option>`;
   
-  companies.forEach(c => {
-    if (c.shippingMethods.includes(queryState.shippingMethod)) {
+  (companies || []).forEach(c => {
+    if ((c.shipping_methods || []).includes(queryState.shippingMethod)) {
       const opt = document.createElement('option');
       opt.value = c.id;
       opt.textContent = c.name;
@@ -1401,24 +1415,22 @@ function loadCompanies() {
   select.appendChild(ownOpt);
 }
 
-function onCompanyChange() {
+async function onCompanyChange() {
   queryState.logisticsCompany = document.getElementById('logisticsCompany').value;
-  updatePriceDisplay();
+  await updatePriceDisplay();
 }
 
-function updatePriceDisplay() {
+async function updatePriceDisplay() {
   const container = document.getElementById('priceDisplay');
   if (!queryState.shippingMethod || !queryState.logisticsCompany) {
     container.innerHTML = `<div class="alert alert-info">${t('select_company')}</div>`;
     return;
   }
   
-  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
   const category = queryState.confirmedCategory;
   
   if (queryState.logisticsCompany === 'customer_own') {
     // 客户自有物流商
-    const rateKey = category === 'normal' ? 'normalRate' : 'sensitiveRate';
     container.innerHTML = `
       <div class="alert alert-info">${t('customer_own')} - ${t('customer_provided')}</div>
       <div class="form-group">
@@ -1427,13 +1439,21 @@ function updatePriceDisplay() {
       </div>
     `;
   } else {
-    // 录入物流商
-    const company = companies.find(c => c.id == queryState.logisticsCompany);
-    if (!company) return;
+    // 录入物流商 - 从 Supabase 获取
+    const { data: company, error } = await supabase
+      .from('log_companies')
+      .select('*')
+      .eq('id', queryState.logisticsCompany)
+      .single();
+    
+    if (error || !company) {
+      container.innerHTML = `<div class="alert alert-error">加载物流公司信息失败</div>`;
+      return;
+    }
     
     const price = queryState.shippingMethod === 'air' 
-      ? (category === 'normal' ? company.airNormalPrice : company.airSensitivePrice)
-      : (category === 'normal' ? company.seaNormalPrice : company.seaSensitivePrice);
+      ? (category === 'normal' ? company.air_normal_price : company.air_sensitive_price)
+      : (category === 'normal' ? company.sea_normal_price : company.sea_sensitive_price);
     const unit = queryState.shippingMethod === 'air' ? t('rate_unit_kg') : t('rate_unit_m3');
     
     container.innerHTML = `
@@ -1446,7 +1466,7 @@ function updatePriceDisplay() {
 
 // ==================== 计算运费 ====================
 
-function calculateFreight() {
+async function calculateFreight() {
   const errors = [];
   
   if (!queryState.powerType) errors.push(t('err_power'));
@@ -1486,36 +1506,38 @@ function calculateFreight() {
   const grossWeight = parseFloat(queryState.grossWeight);
   let volumeWeight, chargeableWeight, freightCost;
   
+  // 从 Supabase 获取物流公司价格
+  let price;
+  if (queryState.logisticsCompany === 'customer_own') {
+    price = parseFloat(queryState.customerOwnPrice);
+  } else {
+    const { data: company, error } = await supabase
+      .from('log_companies')
+      .select('*')
+      .eq('id', queryState.logisticsCompany)
+      .single();
+    
+    if (error || !company) {
+      alert('加载物流公司价格失败，请重试');
+      return;
+    }
+    
+    price = queryState.shippingMethod === 'air'
+      ? (queryState.confirmedCategory === 'normal' ? parseFloat(company.air_normal_price) : parseFloat(company.air_sensitive_price))
+      : (queryState.confirmedCategory === 'normal' ? parseFloat(company.sea_normal_price) : parseFloat(company.sea_sensitive_price));
+  }
+  
   if (queryState.shippingMethod === 'air') {
     // 空运
     volumeWeight = totalVolume / queryState.volumeFactor;
     chargeableWeight = Math.max(grossWeight, volumeWeight);
     // 0.5kg进位
     chargeableWeight = Math.ceil(chargeableWeight * 2) / 2;
-    
-    // 价格
-    let price;
-    if (queryState.logisticsCompany === 'customer_own') {
-      price = parseFloat(queryState.customerOwnPrice);
-    } else {
-      const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
-      const company = companies.find(c => c.id == queryState.logisticsCompany);
-      price = queryState.confirmedCategory === 'normal' ? company.airNormalPrice : company.airSensitivePrice;
-    }
     freightCost = chargeableWeight * price;
   } else {
     // 海运
     const volumeM3 = totalVolume / 1000000; // cm³ → m³
     chargeableWeight = Math.ceil(volumeM3); // 1m³进位
-    
-    let price;
-    if (queryState.logisticsCompany === 'customer_own') {
-      price = parseFloat(queryState.customerOwnPrice);
-    } else {
-      const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
-      const company = companies.find(c => c.id == queryState.logisticsCompany);
-      price = queryState.confirmedCategory === 'normal' ? company.seaNormalPrice : company.seaSensitivePrice;
-    }
     freightCost = chargeableWeight * price;
     volumeWeight = volumeM3;
   }
@@ -1546,8 +1568,17 @@ function calculateFreight() {
   // 显示结果
   const resultContent = document.getElementById('resultContent');
   const catMap = { normal: t('normal'), sensitive: t('sensitive'), banned: t('banned'), unknown: t('unknown') };
-  const companyName = queryState.logisticsCompany === 'customer_own' ? t('customer_own') : 
-    (JSON.parse(localStorage.getItem('lancmall_companies') || '[]').find(c => c.id == queryState.logisticsCompany)?.name || '');
+  
+  // 获取物流公司名称
+  let companyName = t('customer_own');
+  if (queryState.logisticsCompany !== 'customer_own') {
+    const { data: company } = await supabase
+      .from('log_companies')
+      .select('name')
+      .eq('id', queryState.logisticsCompany)
+      .single();
+    companyName = company?.name || '';
+  }
   
   resultContent.innerHTML = `
     <div style="text-align:center;margin-bottom:16px;">
@@ -1583,10 +1614,28 @@ function calculateFreight() {
   });
 }
 
-function saveRecord(record) {
-  const records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
-  records.unshift(record);
-  localStorage.setItem('lancmall_query_records', JSON.stringify(records.slice(0, 500)));
+async function saveRecord(record) {
+  // 写入 Supabase 云端数据库
+  const { error } = await supabase
+    .from('log_query_records')
+    .insert({
+      product_name: record.productName || '',
+      category: record.category || 'unknown',
+      shipping_method: record.shippingMethod || '',
+      chargeable_weight: record.chargeableWeight || 0,
+      gross_weight: record.grossWeight || 0,
+      volume_weight: record.volumeWeight || 0,
+      is_bulky: record.isBulky || false,
+      total_freight: record.freightCost || 0,
+      is_brand: record.isBrand || false,
+      is_liquid: record.isLiquid || false,
+      is_powder: record.isPowder || false,
+      power_type: record.powerType || ''
+    });
+  
+  if (error) {
+    console.error('Error saving record:', error);
+  }
 }
 
 function clearAll() {
@@ -1695,38 +1744,79 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
 }
 
-function renderStats() {
-  const records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
-  document.getElementById('statTotal').textContent = records.length;
-  document.getElementById('statNormal').textContent = records.filter(r => r.category === 'normal').length;
-  document.getElementById('statSensitive').textContent = records.filter(r => r.category === 'sensitive').length;
-  document.getElementById('statUnknown').textContent = records.filter(r => r.category === 'unknown').length;
+async function renderStats() {
+  const { count: total } = await supabase
+    .from('log_query_records')
+    .select('*', { count: 'exact', head: true });
+  
+  const { count: normal } = await supabase
+    .from('log_query_records')
+    .select('*', { count: 'exact', head: true })
+    .eq('category', 'normal');
+  
+  const { count: sensitive } = await supabase
+    .from('log_query_records')
+    .select('*', { count: 'exact', head: true })
+    .eq('category', 'sensitive');
+  
+  const { count: unknown } = await supabase
+    .from('log_query_records')
+    .select('*', { count: 'exact', head: true })
+    .eq('category', 'unknown');
+  
+  document.getElementById('statTotal').textContent = total || 0;
+  document.getElementById('statNormal').textContent = normal || 0;
+  document.getElementById('statSensitive').textContent = sensitive || 0;
+  document.getElementById('statUnknown').textContent = unknown || 0;
 }
 
-function renderRecords() {
-  const records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
+async function renderRecords() {
+  const { data: records, error } = await supabase
+    .from('log_query_records')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  
+  if (error) {
+    console.error('Error loading records:', error);
+    return;
+  }
+  
   const tbody = document.getElementById('recordsBody');
   const catMap = { normal: t('normal'), sensitive: t('sensitive'), banned: t('banned'), unknown: t('unknown') };
   
-  tbody.innerHTML = records.slice(0, 100).map(r => `
+  if (!records || records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-light);">暂无数据</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = records.map(r => `
     <tr>
-      <td style="font-size:12px;">${r.timestamp || ''}</td>
-      <td style="font-weight:600;">${r.productName}</td>
+      <td style="font-size:12px;">${new Date(r.created_at).toLocaleString('zh-CN')}</td>
+      <td style="font-weight:600;">${r.product_name}</td>
       <td><span class="badge ${r.category}">${catMap[r.category] || r.category}</span></td>
-      <td><span class="badge ${r.shippingMethod}">${r.shippingMethod === 'air' ? t('air') : t('sea')}</span></td>
-      <td>${(r.totalGrossWeight || 0).toFixed(2)}</td>
-      <td style="font-weight:700;color:var(--pink);">${(r.chargeableWeight || 0).toFixed(2)}</td>
-      <td>${r.quantity || 0}</td>
+      <td><span class="badge ${r.shipping_method}">${r.shipping_method === 'air' ? t('air') : t('sea')}</span></td>
+      <td>${(r.gross_weight || 0).toFixed(2)}</td>
+      <td style="font-weight:700;color:var(--pink);">${(r.chargeable_weight || 0).toFixed(2)}</td>
+      <td>${(r.total_freight || 0).toFixed(2)}</td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">${t('delete')}</button></td>
     </tr>
   `).join('');
 }
 
-function deleteRecord(id) {
+async function deleteRecord(id) {
   if (!confirm(t('confirm') + '?')) return;
-  let records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
-  records = records.filter(r => r.id !== id);
-  localStorage.setItem('lancmall_query_records', JSON.stringify(records));
+  
+  const { error } = await supabase
+    .from('log_query_records')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    alert('删除失败: ' + error.message);
+    return;
+  }
+  
   loadAdminData();
 }
 
@@ -1763,22 +1853,33 @@ function removeKeyword(type, kw) {
 }
 
 // 物流公司
-function renderCompanies() {
-  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
+async function renderCompanies() {
+  const { data: companies, error } = await supabase
+    .from('log_companies')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error loading companies:', error);
+    document.getElementById('companiesBody').innerHTML = 
+      `<tr><td colspan="6" style="text-align:center;color:var(--error);">加载失败: ${error.message}</td></tr>`;
+    return;
+  }
+  
   const tbody = document.getElementById('companiesBody');
   
-  if (companies.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-light);">暂无物流公司</td></tr>`;
+  if (!companies || companies.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-light);">${t('no_data') || '暂无数据'}</td></tr>`;
     return;
   }
   
   tbody.innerHTML = companies.map(c => `
     <tr>
       <td style="font-weight:600;">${c.name}</td>
-      <td>${c.shippingMethods.map(m => `<span class="badge ${m}">${m === 'air' ? t('air_transport') : t('sea_transport')}</span>`).join(' ')}</td>
-      <td>${c.airNormalPrice || '-'} / ${c.airSensitivePrice || '-'}</td>
-      <td>${c.seaNormalPrice || '-'} / ${c.seaSensitivePrice || '-'}</td>
-      <td>${c.contactName || ''}<br><small>${c.contactPhone || ''}</small></td>
+      <td>${(c.shipping_methods || []).map(m => `<span class="badge ${m}">${m === 'air' ? t('air_transport') : t('sea_transport')}</span>`).join(' ')}</td>
+      <td>${c.air_normal_price || '-'} / ${c.air_sensitive_price || '-'}</td>
+      <td>${c.sea_normal_price || '-'} / ${c.sea_sensitive_price || '-'}</td>
+      <td>${c.contact_name || ''}<br><small>${c.contact_phone || ''}</small></td>
       <td>
         <button class="btn btn-outline btn-sm" onclick="editCompany(${c.id})">${t('edit')}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteCompany(${c.id})">${t('delete')}</button>
@@ -1826,7 +1927,7 @@ function closeCompanyModal() {
   editingCompanyId = null;
 }
 
-function saveCompany() {
+async function saveCompany() {
   const name = document.getElementById('compName').value.trim();
   if (!name) { alert(t('company_name_label') + ' required'); return; }
   
@@ -1835,53 +1936,84 @@ function saveCompany() {
   
   const companyData = {
     name,
-    shippingMethods: [air ? 'air' : null, sea ? 'sea' : null].filter(Boolean),
-    airNormalPrice: document.getElementById('compAirNormal').value || '0',
-    airSensitivePrice: document.getElementById('compAirSensitive').value || '0',
-    seaNormalPrice: document.getElementById('compSeaNormal').value || '0',
-    seaSensitivePrice: document.getElementById('compSeaSensitive').value || '0',
-    contactName: document.getElementById('compContactName').value,
-    contactPhone: document.getElementById('compContactPhone').value,
-    contactAddress: document.getElementById('compContactAddress').value
+    shipping_methods: [air ? 'air' : null, sea ? 'sea' : null].filter(Boolean),
+    air_normal_price: document.getElementById('compAirNormal').value || '0',
+    air_sensitive_price: document.getElementById('compAirSensitive').value || '0',
+    sea_normal_price: document.getElementById('compSeaNormal').value || '0',
+    sea_sensitive_price: document.getElementById('compSeaSensitive').value || '0',
+    contact_name: document.getElementById('compContactName').value,
+    contact_phone: document.getElementById('compContactPhone').value,
+    contact_address: document.getElementById('compContactAddress').value
   };
   
-  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
-  
+  let error;
   if (editingCompanyId) {
-    const idx = companies.findIndex(c => c.id === editingCompanyId);
-    companies[idx] = { ...companies[idx], ...companyData };
+    ({ error } = await supabase
+      .from('log_companies')
+      .update(companyData)
+      .eq('id', editingCompanyId));
   } else {
-    companies.push({ id: Date.now(), ...companyData });
+    ({ error } = await supabase
+      .from('log_companies')
+      .insert(companyData));
   }
   
-  localStorage.setItem('lancmall_companies', JSON.stringify(companies));
+  if (error) {
+    alert('保存失败: ' + error.message);
+    return;
+  }
+  
   closeCompanyModal();
   renderCompanies();
 }
 
-function editCompany(id) {
-  const companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
-  const company = companies.find(c => c.id === id);
-  if (company) showCompanyModal(company);
+async function editCompany(id) {
+  const { data: company, error } = await supabase
+    .from('log_companies')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error || !company) {
+    alert('加载失败: ' + (error?.message || '未找到数据'));
+    return;
+  }
+  
+  showCompanyModal(company);
 }
 
-function deleteCompany(id) {
+async function deleteCompany(id) {
   if (!confirm(t('delete_company_confirm'))) return;
-  let companies = JSON.parse(localStorage.getItem('lancmall_companies') || '[]');
-  companies = companies.filter(c => c.id !== id);
-  localStorage.setItem('lancmall_companies', JSON.stringify(companies));
+  
+  const { error } = await supabase
+    .from('log_companies')
+    .delete()
+    .eq('id', id);
+  
+  if (error) {
+    alert('删除失败: ' + error.message);
+    return;
+  }
+  
   renderCompanies();
 }
 
 // 待确认品类
-function renderUnknownRanking() {
-  const records = JSON.parse(localStorage.getItem('lancmall_query_records') || '[]');
-  const unknownRecords = records.filter(r => r.category === 'unknown');
+async function renderUnknownRanking() {
+  const { data: unknownRecords, error } = await supabase
+    .from('log_query_records')
+    .select('*')
+    .eq('category', 'unknown');
+  
+  if (error) {
+    console.error('Error loading unknown categories:', error);
+    return;
+  }
   
   const countMap = {};
-  unknownRecords.forEach(r => {
-    const name = r.productName.toLowerCase();
-    if (!countMap[name]) countMap[name] = { name: r.productName, count: 0 };
+  (unknownRecords || []).forEach(r => {
+    const name = r.product_name.toLowerCase();
+    if (!countMap[name]) countMap[name] = { name: r.product_name, count: 0 };
     countMap[name].count++;
   });
   
