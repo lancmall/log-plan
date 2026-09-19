@@ -1072,7 +1072,19 @@ const translations = {
 // ==================== Supabase 初始化 ====================
 const SUPABASE_URL = 'https://cgsdojclymheqfpxlklu.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_Ox7fOMiHrhMzlw1QFyHyFQ_eS60XW3j';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabase = null;
+
+// 安全初始化，避免 SDK 加载失败导致整个页面崩溃
+try {
+  if (window.supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('Supabase connected successfully');
+  } else {
+    console.warn('Supabase SDK not loaded, cloud features disabled');
+  }
+} catch (e) {
+  console.error('Supabase init error:', e);
+}
 
 let currentLang = localStorage.getItem('lancmall_lang') || 'zh';
 let queryState = {
